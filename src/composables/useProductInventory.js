@@ -64,6 +64,33 @@ export function useProductInventory(showNotification, askConfirmation, abrirModa
     )
   }
 
+  function validarEstructuraExcel(json) {
+    if (json.length === 0) {
+      return { valido: false, error: "El archivo Excel no contiene datos" }
+    }
+
+    const primeraFila = json[0]
+    const columnas = Object.keys(primeraFila)
+    
+    // Buscar columnas que puedan ser identificadores
+    const tieneId = columnas.some(col => 
+      col.toLowerCase().includes('id') || 
+      col.toLowerCase().includes('código') ||
+      col.toLowerCase().includes('codigo') ||
+      col.toLowerCase().includes('sku') ||
+      col.toLowerCase().includes('referencia')
+    )
+
+    if (!tieneId) {
+      return { 
+        valido: false, 
+        error: "El archivo Excel debe contener una columna 'ID', 'Código', 'SKU' o 'Referencia' para identificar los productos. Columnas encontradas: " + columnas.join(', ')
+      }
+    }
+
+    return { valido: true }
+  }
+
   function manejarArchivo(event) {
     const file = event.target.files[0]
     if (!file) return
@@ -80,7 +107,7 @@ export function useProductInventory(showNotification, askConfirmation, abrirModa
     const loadingId = showNotification(
       "loading",
       "Cargando archivo",
-      "Procesando el archivo Excel...",
+      "Validando y procesando el archivo Excel...",
       0
     )
 
@@ -92,13 +119,17 @@ export function useProductInventory(showNotification, askConfirmation, abrirModa
         const hoja = workbook.Sheets[workbook.SheetNames[0]]
         const json = XLSX.utils.sheet_to_json(hoja)
 
-        if (json.length === 0) {
-          showNotification("warning", "Archivo vacío", "El archivo seleccionado no contiene datos")
+        // Validar estructura del Excel
+        const validacion = validarEstructuraExcel(json)
+        if (!validacion.valido) {
+          showNotification("error", "Estructura inválida", validacion.error)
           return
         }
 
-        const productosConContadores = json.map((producto) => ({
+        const productosConContadores = json.map((producto, index) => ({
           ...producto,
+          // Si no hay un ID claro, usar el índice como fallback
+          id: producto.ID || producto.Id || producto.id || producto.Código || producto.Codigo || producto.código || producto.codigo || producto.SKU || producto.Referencia || `producto_${index + 1}`,
           conteo: 0,
           suma: 0,
           busquedas: 0,
@@ -112,7 +143,7 @@ export function useProductInventory(showNotification, askConfirmation, abrirModa
         showNotification(
           "success",
           "Archivo cargado",
-          `Se cargaron ${json.length} productos exitosamente`
+          `Se cargaron ${json.length} productos exitosamente. Columnas: ${Object.keys(json[0]).join(', ')}`
         )
       } catch (error) {
         showNotification(
@@ -158,8 +189,8 @@ export function useProductInventory(showNotification, askConfirmation, abrirModa
 
           showNotification(
             "success",
-            "Producto actualizado",
-            `Producto "${productIdTrimmed}" actualizado. Cantidad: ${cantidad}`
+            "Producto encontrado",
+            `Producto "${productIdTrimmed}" encontrado. Cantidad: ${cantidad}`
           )
         }
       )

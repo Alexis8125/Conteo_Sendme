@@ -5,7 +5,7 @@ export function useCantidadModal() {
   const modalAnimation = ref(false)
   const productoSeleccionado = ref(null)
   const cantidadInput = ref(1)
-  const accion = ref('') // 'buscar' o 'cargar'
+  const accion = ref('') 
   const callbackConfirmar = ref(null)
 
   function abrirModal(producto, accionType, onConfirm) {
@@ -32,7 +32,6 @@ export function useCantidadModal() {
   function confirmarCantidad() {
     const cantidad = Number(cantidadInput.value)
     if (isNaN(cantidad) || cantidad < 0) {
-      // No llamamos a showNotification aquí porque no está disponible
       console.error('Cantidad inválida')
       return
     }
