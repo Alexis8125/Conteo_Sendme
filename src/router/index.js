@@ -1,21 +1,46 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import InventoryView from '../views/InventoryView.vue' // 👈 importa tu nueva vista
+import LoginView from '../views/LoginView.vue'
+import InventoriesView from '../views/InventoriesView.vue'
+import CountingView from '../views/CountingView.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView
+      redirect: '/login'
     },
     {
-      path: '/inventario',   // 👈 URL para entrar
-      name: 'inventario',
-      component: InventoryView
+      path: '/login',
+      name: 'login',
+      component: LoginView
+    },
+    {
+      path: '/inventarios',
+      name: 'inventarios',
+      component: InventoriesView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/conteo/:id',
+      name: 'conteo',
+      component: CountingView,
+      meta: { requiresAuth: true }
     }
   ]
+})
+
+// Guard de navegación
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token')
+  
+  if (to.meta.requiresAuth && !token) {
+    next('/login')
+  } else if (to.path === '/login' && token) {
+    next('/inventarios')
+  } else {
+    next()
+  }
 })
 
 export default router

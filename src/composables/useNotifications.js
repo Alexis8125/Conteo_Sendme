@@ -1,28 +1,29 @@
+// src/composables/useNotifications.js
 import { ref } from 'vue'
 
-export function useNotifications() {
-  const notifications = ref([])
+// Estado global para las notificaciones
+const notifications = ref([])
+let notificationId = 0
 
-  function showNotification(type, title, message, duration = 4000) {
-    const id = Date.now() + Math.random()
+export function useNotifications() {
+  
+  const showNotification = (type, title, message, duration = 5000) => {
+    const id = ++notificationId
     const notification = {
       id,
       type,
       title,
       message,
       duration,
-      show: false,
+      show: true
     }
 
-    notifications.value.push(notification)
+    console.log('📢 Mostrando notificación:', { type, title, message, id })
+    
+    // Agregar la notificación al inicio del array para que aparezca arriba
+    notifications.value.unshift(notification)
 
-    setTimeout(() => {
-      const index = notifications.value.findIndex((n) => n.id === id)
-      if (index !== -1) {
-        notifications.value[index].show = true
-      }
-    }, 10)
-
+    // Auto-remove after duration
     if (duration > 0) {
       setTimeout(() => {
         removeNotification(id)
@@ -32,19 +33,42 @@ export function useNotifications() {
     return id
   }
 
-  function removeNotification(id) {
-    const index = notifications.value.findIndex((n) => n.id === id)
+  const removeNotification = (id) => {
+    const index = notifications.value.findIndex(n => n.id === id)
     if (index !== -1) {
-      notifications.value[index].show = false
-      setTimeout(() => {
-        notifications.value.splice(index, 1)
-      }, 300)
+      notifications.value.splice(index, 1)
     }
+  }
+
+  // Métodos rápidos para tipos comunes
+  const success = (title, message, duration) => {
+    return showNotification('success', title, message, duration)
+  }
+
+  const error = (title, message, duration) => {
+    return showNotification('error', title, message, duration)
+  }
+
+  const warning = (title, message, duration) => {
+    return showNotification('warning', title, message, duration)
+  }
+
+  const info = (title, message, duration) => {
+    return showNotification('info', title, message, duration)
+  }
+
+  const loading = (title, message, duration = 0) => {
+    return showNotification('loading', title, message, duration)
   }
 
   return {
     notifications,
     showNotification,
-    removeNotification
+    removeNotification,
+    success,
+    error,
+    warning,
+    info,
+    loading
   }
 }
