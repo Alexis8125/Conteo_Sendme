@@ -18,7 +18,7 @@ export function useNotifications() {
       show: true
     }
 
-    console.log('📢 Mostrando notificación:', { type, title, message, id })
+    console.log('Mostrando notificación:', { type, title, message, id })
     
     // Agregar la notificación al inicio del array para que aparezca arriba
     notifications.value.unshift(notification)

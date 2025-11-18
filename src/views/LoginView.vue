@@ -1,11 +1,10 @@
-<!-- src/views/LoginView.vue -->
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
     <div class="max-w-md w-full">
       <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
         <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-center">
-          <h1 class="text-2xl font-bold text-white mb-2">Sistema de Inventario</h1>
-          <p class="text-blue-100 text-sm">Control y gestión de inventarios</p>
+          <h1 class="text-2xl font-bold text-white mb-2">Conteo de Inventario</h1>
+          <!-- <p class="text-blue-100 text-sm">Control y gestión de inventarios</p> -->
         </div>
         
         <div class="p-8">
@@ -53,11 +52,7 @@
             </button>
           </form>
           
-          <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p class="text-xs text-gray-600 text-center">
-              <strong>Demo:</strong> admin / password
-            </p>
-          </div>
+          
         </div>
       </div>
     </div>
@@ -78,13 +73,12 @@ const credentials = ref({
 })
 const isLoading = ref(false)
 
-// Test de notificaciones al cargar el componente
 import { onMounted } from 'vue'
 onMounted(() => {
-  console.log('🔔 LoginView montado - probando notificaciones...')
+  console.log('LoginView montado - probando notificaciones...')
   // Mostrar una notificación de prueba después de 1 segundo
   setTimeout(() => {
-    info('Sistema listo', 'Bienvenido al sistema de inventario')
+    info('Sistema listo', 'Bienvenido al sistema de conteo')
   }, 1000)
 })
 
@@ -92,7 +86,7 @@ async function handleLogin() {
   isLoading.value = true
   
   try {
-    console.log('🔐 Intentando login...')
+    console.log('Intentando login...', credentials.value)
     
     const response = await fetch('http://localhost:3000/api/login', {
       method: 'POST',
@@ -103,8 +97,9 @@ async function handleLogin() {
     })
     
     const data = await response.json()
+    console.log('Respuesta completa:', data)
     
-    if (response.ok) {
+    if (response.ok && data.success) {
       success('¡Éxito!', 'Inicio de sesión exitoso')
       
       localStorage.setItem('token', data.token)
@@ -115,13 +110,16 @@ async function handleLogin() {
         router.push('/inventarios')
       }, 1000)
     } else {
-      error('Error de inicio de sesión', data.error || 'Credenciales incorrectas')
+      const errorMessage = data.error || data.message || 'Credenciales incorrectas'
+      console.log('Error de login:', errorMessage)
+      error('Error de inicio de sesión', errorMessage)
     }
   } catch (err) {
-    console.error('💥 Error de conexión:', err)
+    console.error('Error de conexión:', err)
     error('Error de conexión', 'No se pudo conectar con el servidor')
   } finally {
     isLoading.value = false
   }
 }
+
 </script>

@@ -59,7 +59,7 @@ import { useNotifications } from '@/composables/useNotifications'
 const { notifications, removeNotification } = useNotifications()
 
 // Log para debugging
-console.log('🔔 NotificationsContainer montado, notificaciones:', notifications.value.length)
+console.log('NotificationsContainer montado, notificaciones:', notifications.value.length)
 </script>
 
 <style scoped>

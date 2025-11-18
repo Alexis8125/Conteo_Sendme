@@ -22,7 +22,7 @@ onMounted(() => {
     router.push('/login')
   }
   
-  console.log('🚀 App montada correctamente')
+  console.log('App montada correctamente')
 })
 </script>
 

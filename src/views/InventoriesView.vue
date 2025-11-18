@@ -1,4 +1,4 @@
-<!-- src/views/InventoriesView.vue -->
+<!-- src/views/InventariosView.vue -->
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Header -->
@@ -13,10 +13,11 @@
             </div>
             <div>
               <h1 class="text-xl font-bold text-gray-900">Sistema de Inventario</h1>
-              <p class="text-sm text-gray-500">Gestión de inventarios</p>
+              <p class="text-sm text-gray-500">Conteo de inventarios</p>
             </div>
           </div>
           <div class="flex items-center space-x-4">
+            
             <span class="text-sm text-gray-700">Hola, {{ user?.full_name }}</span>
             <button
               @click="handleLogout"
@@ -33,186 +34,257 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <!-- Crear inventario -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-          <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
-          Crear Nuevo Inventario
-        </h2>
-        <form @submit.prevent="createInventory" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Inventario *</label>
-            <input
-              v-model="newInventory.name"
-              type="text"
-              required
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
-              placeholder="Ej: Inventario General 2024"
-            >
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-            <input
-              v-model="newInventory.description"
-              type="text"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
-              placeholder="Descripción opcional"
-            >
-          </div>
-          <div class="flex items-end">
+      <!-- Tabla de inventarios -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Header de la tabla con búsqueda y acciones -->
+        <div class="flex justify-between items-center p-4 border-b border-gray-200">
+          <div class="flex items-center space-x-4">
+            <h2 class="text-lg font-bold text-gray-900 flex items-center">
+              <svg class="w-5 h-5 text-gray-700 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              Inventarios
+            </h2>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </div>
+              <input
+                v-model="searchQuery"
+                type="text"
+                class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                placeholder="Buscar inventarios..."
+              >
+              
+            </div>
             <button
-              type="submit"
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center"
+              @click="showCreateModal = true"
+              class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2"
             >
-              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
               </svg>
-              Crear Inventario
+              <span>Crear Inventario</span>
             </button>
           </div>
-        </form>
-      </div>
-
-      <!-- Lista de inventarios -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div class="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 class="text-xl font-bold text-gray-900 flex items-center">
-            <svg class="w-5 h-5 text-gray-700 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-            </svg>
-            Mis Inventarios
-          </h2>
-          <span class="text-sm text-gray-500">{{ inventories.length }} inventario(s)</span>
-        </div>
-
-        <div v-if="inventories.length === 0" class="text-center py-12">
-          <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-          </svg>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No hay inventarios</h3>
-          <p class="text-gray-500 mb-4">Crea tu primer inventario para comenzar</p>
-        </div>
-
-        <div v-else class="divide-y divide-gray-200">
-          <div
-            v-for="inventory in inventories"
-            :key="inventory.id"
-            class="p-6 hover:bg-gray-50 transition-colors duration-200"
-          >
-            <!-- Header con título y botones de acción -->
-            <div class="flex justify-between items-start mb-4">
-              <div class="flex-1">
-                <div class="flex items-center justify-between mb-2">
-                  <h3 class="text-lg font-semibold text-gray-900">{{ inventory.name }}</h3>
-                  <div class="flex space-x-2">
-                    <!-- Botón Editar -->
-                    <button
-                      @click="editInventory(inventory)"
-                      class="flex items-center space-x-1 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 py-1 px-2 rounded-md text-sm transition-colors duration-200"
-                      title="Editar inventario"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                      </svg>
-                      <span class="hidden sm:inline">Editar</span>
-                    </button>
-                    
-                    <!-- Botón Eliminar -->
-                    <button
-                      @click="deleteInventory(inventory)"
-                      class="flex items-center space-x-1 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 py-1 px-2 rounded-md text-sm transition-colors duration-200"
-                      title="Eliminar inventario"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                      <span class="hidden sm:inline">Eliminar</span>
-                    </button>
-                  </div>
-                </div>
-                
-                <p class="text-sm text-gray-600 mb-2">{{ inventory.description }}</p>
-                <div class="flex flex-wrap gap-4 text-sm text-gray-500">
-                  <span class="flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                    Creado por: {{ inventory.created_by_name }}
-                  </span>
-                  <span class="flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Productos: {{ inventory.total_products }}
-                  </span>
-                  <span class="flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Contados: {{ inventory.counted_products }}
-                  </span>
-                  <span class="flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    Creado: {{ formatDate(inventory.created_at) }}
-                  </span>
-                </div>
-              </div>
-            </div>
+          
+          <!-- Acciones con iconos -->
+          <div class="flex items-center space-x-2">
+            <button
+              @click="refreshInventories"
+              class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              title="Actualizar"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+            </button>
             
-            <!-- Barra de progreso -->
-            <div class="mt-4 mb-4">
-              <div class="flex justify-between text-sm text-gray-600 mb-1">
-                <span>Progreso del conteo</span>
-                <span class="font-medium">{{ Math.round(inventory.progress_percentage) }}%</span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  class="bg-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
-                  :style="{ width: `${inventory.progress_percentage}%` }"
-                ></div>
-              </div>
-            </div>
-
-            <!-- Botones de acción principales -->
-            <div class="flex flex-wrap gap-2">
+            <!-- Acciones para inventario seleccionado -->
+            <template v-if="selectedInventory">
               <button
-                @click="uploadProducts(inventory)"
-                class="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                @click="editInventory(selectedInventory)"
+                class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                title="Editar"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </button>
+              <button
+                @click="uploadProducts(selectedInventory)"
+                class="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                title="Cargar Excel"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                 </svg>
-                <span>Cargar Excel</span>
               </button>
               <button
-                @click="startCounting(inventory)"
-                class="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                @click="startCounting(selectedInventory)"
+                class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                title="Iniciar Conteo"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                <span>Iniciar Conteo</span>
               </button>
               <button
-                @click="exportInventory(inventory)"
-                class="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                @click="viewReports(selectedInventory)"
+                class="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                title="Ver Reportes"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
-                <span>Exportar</span>
               </button>
-            </div>
+              <button
+                @click="deleteInventory(selectedInventory)"
+                class="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                title="Eliminar"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+              <button
+                @click="clearSelection"
+                class="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                title="Cancelar selección"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </template>
           </div>
         </div>
+
+        <!-- AppTable Component -->
+        <AppTable
+          :data="filteredTableData"
+          :headers="tableHeaders"
+          :pageSize="pageSize"
+          :pageCurrent="currentPage"
+          :totalItems="filteredTableData.length"
+          :loading="loading"
+          :showPaginator="false"
+          :multipleSelection="false"
+          :tableSize="'small'"
+          :stripedRows="true"
+          :selectedRow="selectedInventory"
+          @row-double-click="handleRowDoubleClick"
+        >
+          <!-- Slot para progreso -->
+          <template #custom-progress="{ data }">
+            <div class="flex flex-col items-center">
+              <div class="w-full bg-gray-200 rounded-full h-2 mb-1">
+                <div
+                  class="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                  :style="{ width: `${data.progress_percentage}%` }"
+                ></div>
+              </div>
+              <span class="text-xs text-gray-600">{{ Math.round(data.progress_percentage) }}%</span>
+            </div>
+          </template>
+
+          <!-- Slot para cuando no hay datos -->
+          <template #empty>
+            <div class="text-center py-12">
+              <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">No hay inventarios</h3>
+              <p class="text-gray-500 mb-4">Crea tu primer inventario para comenzar</p>
+              <button
+                @click="showCreateModal = true"
+                class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-300"
+              >
+                Crear Primer Inventario
+              </button>
+            </div>
+          </template>
+        </AppTable>
       </div>
     </main>
 
-    <!-- Modal de Edición con animaciones -->
+    <!-- Modal de Crear Inventario -->
+    <transition name="modal">
+      <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <transition name="modal-content">
+          <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              Crear Nuevo Inventario
+            </h3>
+            
+            <form @submit.prevent="createInventory">
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Inventario *</label>
+                  <input
+                    v-model="newInventory.name"
+                    type="text"
+                    required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                    placeholder="Ej: Inventario General"
+                    ref="nameInput"
+                  >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                  <textarea
+                    v-model="newInventory.description"
+                    rows="3"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                    placeholder="Descripción opcional del inventario"
+                  ></textarea>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Archivo Excel de Productos</label>
+                  <input
+                    type="file"
+                    ref="fileInput"
+                    accept=".xlsx, .xls"
+                    @change="handleFileSelect"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  >
+                  <p class="text-xs text-gray-500 mt-1">Archivo Excel con columnas: código de barras, nombre del producto, stock esperado</p>
+                </div>
+
+                <div v-if="selectedFile" class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                      <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      <span class="text-sm font-medium text-blue-700">{{ selectedFile.name }}</span>
+                      <span class="text-xs text-blue-600">({{ formatFileSize(selectedFile.size) }})</span>
+                    </div>
+                    <button
+                      type="button"
+                      @click="clearSelectedFile"
+                      class="text-blue-600 hover:text-blue-800"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex space-x-3 mt-6">
+                <button
+                  type="button"
+                  @click="showCreateModal = false"
+                  class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg transition-colors duration-300"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  :disabled="creatingInventory"
+                  class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-2 rounded-lg transition-colors duration-300 flex items-center justify-center"
+                >
+                  <svg v-if="creatingInventory" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>{{ creatingInventory ? 'Creando...' : 'Crear Inventario' }}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </transition>
+      </div>
+    </transition>
+
+    <!-- Modal de Edición -->
     <transition name="modal">
       <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <transition name="modal-content">
@@ -264,7 +336,7 @@
       </div>
     </transition>
 
-    <!-- Modal de Confirmación de Eliminación con animaciones -->
+    <!-- Modal de Confirmación de Eliminación -->
     <transition name="modal">
       <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <transition name="modal-content">
@@ -305,30 +377,80 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotifications } from '@/composables/useNotifications'
+import AppTable from '@/components/atoms/AppTable.vue'
 
 const router = useRouter()
 const { success, error, info } = useNotifications()
 
 const inventories = ref([])
 const user = ref(JSON.parse(localStorage.getItem('user') || '{}'))
+const selectedInventory = ref(null)
+const searchQuery = ref('')
 
 // Estados para modales
+const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const editingInventory = ref({ id: null, name: '', description: '' })
 const deletingInventory = ref(null)
+const nameInput = ref(null)
 const editNameInput = ref(null)
+const fileInput = ref(null)
+const loading = ref(false)
+const creatingInventory = ref(false)
+
+// Estados para archivos
+const selectedFile = ref(null)
+
+// Configuración de paginación
+const pageSize = ref(10)
+const currentPage = ref(1)
 
 const newInventory = ref({
   name: '',
   description: ''
 })
 
+// Configuración de la tabla
+const tableHeaders = ref([
+  { field: 'name', header: 'Nombre', width: '200px' },
+  { field: 'description', header: 'Descripción', width: '200px' },
+  { field: 'total_products', header: 'Productos', width: '100px' },
+  { field: 'total_units', header: 'Unidades', width: '100px' },
+  { field: 'counted_products', header: 'Contados', width: '100px' },
+  { field: 'counted_units', header: 'Unid. Contadas', width: '120px' },
+  { field: 'progress', header: 'Progreso', width: '120px' },
+  { field: 'created_at', header: 'Creado', width: '120px' },
+  { field: 'created_by_name', header: 'Creado por', width: '150px' }
+])
+
+// Datos formateados para la tabla
+const tableData = computed(() => {
+  return inventories.value.map(inventory => ({
+    ...inventory,
+    progress: inventory.progress_percentage,
+    created_at: formatDateForTable(inventory.created_at)
+  }))
+})
+
+// Datos filtrados por búsqueda
+const filteredTableData = computed(() => {
+  if (!searchQuery.value) return tableData.value
+  
+  const query = searchQuery.value.toLowerCase()
+  return tableData.value.filter(inventory => 
+    inventory.name?.toLowerCase().includes(query) ||
+    inventory.description?.toLowerCase().includes(query) ||
+    inventory.created_by_name?.toLowerCase().includes(query)
+  )
+})
+
 // Funciones de formato
 function formatDate(dateString) {
+  if (!dateString) return '-'
   const date = new Date(dateString)
   return date.toLocaleDateString('es-ES', {
     year: 'numeric',
@@ -337,8 +459,43 @@ function formatDate(dateString) {
   })
 }
 
+function formatDateForTable(dateString) {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
+
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+// Manejar doble click
+function handleRowDoubleClick(inventory) {
+  selectedInventory.value = inventory
+}
+
+// Limpiar selección
+function clearSelection() {
+  selectedInventory.value = null
+}
+
+// Refrescar inventarios
+function refreshInventories() {
+  fetchInventories()
+  success('Actualizado', 'Lista de inventarios actualizada')
+}
+
 // Funciones CRUD
 async function fetchInventories() {
+  loading.value = true
   try {
     const token = localStorage.getItem('token')
     const response = await fetch('http://localhost:3000/api/inventories', {
@@ -354,6 +511,40 @@ async function fetchInventories() {
     }
   } catch (err) {
     error('Error de conexión', 'No se pudo conectar con el servidor')
+  } finally {
+    loading.value = false
+  }
+}
+
+// Manejar selección de archivo
+function handleFileSelect(event) {
+  const file = event.target.files[0]
+  if (file) {
+    // Validar tipo de archivo
+    const validTypes = ['.xlsx', '.xls']
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase()
+    
+    if (!validTypes.includes(fileExtension)) {
+      error('Error', 'Solo se permiten archivos Excel (.xlsx, .xls)')
+      event.target.value = ''
+      return
+    }
+    
+    // Validar tamaño (máximo 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      error('Error', 'El archivo no debe superar los 10MB')
+      event.target.value = ''
+      return
+    }
+    
+    selectedFile.value = file
+  }
+}
+
+function clearSelectedFile() {
+  selectedFile.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
   }
 }
 
@@ -363,8 +554,12 @@ async function createInventory() {
     return
   }
   
+  creatingInventory.value = true
+  
   try {
     const token = localStorage.getItem('token')
+    
+    // Crear el inventario
     const response = await fetch('http://localhost:3000/api/inventories', {
       method: 'POST',
       headers: {
@@ -376,14 +571,28 @@ async function createInventory() {
     
     const data = await response.json()
     if (response.ok) {
+      const inventoryId = data.id
+      
+      // Si hay un archivo seleccionado, cargarlo inmediatamente
+      if (selectedFile.value) {
+        await uploadFile(inventoryId, selectedFile.value, false)
+      }
+      
+      // Limpiar formulario y cerrar modal
       newInventory.value = { name: '', description: '' }
+      clearSelectedFile()
+      showCreateModal.value = false
+      
+      // Actualizar lista
       fetchInventories()
-      success('Éxito', 'Inventario creado exitosamente')
+      success('Éxito', 'Inventario creado exitosamente' + (selectedFile.value ? ' con productos cargados' : ''))
     } else {
       error('Error', data.error || 'Error al crear el inventario')
     }
   } catch (err) {
     error('Error', 'Error al crear el inventario')
+  } finally {
+    creatingInventory.value = false
   }
 }
 
@@ -462,15 +671,13 @@ function uploadProducts(inventory) {
   input.onchange = async (e) => {
     const file = e.target.files[0]
     if (file) {
-      await uploadFile(inventory.id, file)
+      await uploadFile(inventory.id, file, false)
     }
   }
   input.click()
 }
 
-// En el script setup, reemplaza la función uploadFile con esta:
-
-async function uploadFile(inventoryId, file) {
+async function uploadFile(inventoryId, file, overwrite = false) {
   try {
     const token = localStorage.getItem('token')
     if (!token) {
@@ -479,32 +686,23 @@ async function uploadFile(inventoryId, file) {
       return
     }
 
-    console.log('📤 Uploading file to inventory:', inventoryId)
-    
     const formData = new FormData()
     formData.append('file', file)
+    if (overwrite) {
+      formData.append('overwrite', 'true')
+    }
     
     const response = await fetch(`http://localhost:3000/api/inventories/${inventoryId}/upload`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
-        // NO incluir 'Content-Type': el navegador lo establecerá automáticamente con el boundary para FormData
       },
       body: formData
     })
 
-    console.log('📨 Response status:', response.status)
-
     if (response.status === 403) {
       error('Error de autenticación', 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
       handleLogout()
-      return
-    }
-
-    if (response.status === 500) {
-      const errorText = await response.text()
-      console.error('💥 Server error:', errorText)
-      error('Error del servidor', 'Hubo un problema procesando el archivo. Verifica la consola para más detalles.')
       return
     }
 
@@ -520,7 +718,7 @@ async function uploadFile(inventoryId, file) {
       error('Error', data.error || 'Error al cargar el archivo')
     }
   } catch (err) {
-    console.error('💥 Upload error:', err)
+    console.error('Upload error:', err)
     error('Error de conexión', 'No se pudo conectar con el servidor. Verifica que esté ejecutándose.')
   }
 }
@@ -529,8 +727,8 @@ function startCounting(inventory) {
   router.push(`/conteo/${inventory.id}`)
 }
 
-function exportInventory(inventory) {
-  info('Información', 'Función de exportación en desarrollo')
+function viewReports(inventory) {
+  router.push(`/reportes/${inventory.id}`)
 }
 
 function handleLogout() {
@@ -543,3 +741,30 @@ onMounted(() => {
   fetchInventories()
 })
 </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-content-enter-active,
+.modal-content-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-content-enter-from {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.modal-content-leave-to {
+  opacity: 0;
+  transform: scale(1.1);
+}
+</style>
