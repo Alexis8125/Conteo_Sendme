@@ -1,13 +1,13 @@
-<!-- src/views/CountingView.vue COMPLETO -->
+<!-- src/views/CountingView.vue -->
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
+    <!-- Header (se mantiene igual) -->
     <header class="bg-white shadow-sm border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center space-x-4">
             <button
-              @click="$router.push('/inventarios')"
+              @click="goBackToInventories"
               class="flex items-center space-x-2 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 py-2 px-3 rounded-lg transition-colors duration-200"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,12 +21,6 @@
             </div>
           </div>
           <div class="flex items-center space-x-6">
-            <!-- Progreso del producto actual -->
-            <div class="text-center">
-              <p class="text-sm text-gray-600">Progreso Producto</p>
-              <p class="text-lg font-bold text-blue-600">{{ currentProductStats?.progress_percentage || 0 }}%</p>
-            </div>
-            
             <!-- Selector de modo -->
             <div class="flex items-center space-x-4">
               <span class="text-sm font-medium text-gray-700">Modo:</span>
@@ -138,7 +132,7 @@
             </p>
           </div>
 
-          <!-- Información del último escaneo MEJORADA -->
+          <!-- Información del último escaneo -->
           <div v-if="lastScanInfo" class="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
             <h3 class="text-lg font-semibold text-blue-900 mb-4 flex items-center">
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -272,7 +266,7 @@
             </button>
           </div>
 
-          <!-- Información del producto manual MEJORADA -->
+          <!-- Información del producto manual -->
           <div v-if="manualProduct && !manualProductError" class="mt-6 p-6 bg-gray-50 border border-gray-200 rounded-lg">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Producto Encontrado</h3>
             <div class="grid grid-cols-2 gap-4 text-sm">
@@ -322,119 +316,204 @@
         </div>
       </div>
 
-      <!-- Estadísticas y reportes MEJORADOS -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Estadísticas del PRODUCTO ACTUAL -->
+      <!-- SOLO ÚLTIMO ESCANEO Y PRODUCTO ANTERIOR -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Último Escaneo -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            Producto Actual
+            Último Escaneo
           </h3>
-          <div v-if="currentProduct" class="space-y-4">
+          <div v-if="lastScanInfo" class="space-y-4">
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-600">Producto</span>
-              <span class="text-lg font-bold text-blue-600">{{ currentProduct.product_name }}</span>
+              <span class="text-lg font-bold text-green-600">{{ lastScanInfo.product_name }}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-600">Código</span>
-              <span class="text-lg font-mono text-gray-900">{{ currentProduct.barcode }}</span>
+              <span class="text-lg font-mono text-gray-900">{{ lastScanInfo.barcode }}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-600">Stock Esperado</span>
-              <span class="text-lg font-bold text-purple-600">{{ currentProduct.expected_stock || 0 }}</span>
+              <span class="text-lg font-bold text-purple-600">{{ lastScanInfo.expected_stock || 0 }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-600">Contado Actual</span>
-              <span class="text-lg font-bold text-green-600">{{ currentProduct.counted_stock || 0 }}</span>
+              <span class="text-sm text-gray-600">Total Contado</span>
+              <span class="text-lg font-bold text-green-600">{{ lastScanInfo.total_counted }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-600">Escaneado Ahora</span>
+              <span class="text-lg font-bold text-blue-600">{{ lastScanInfo.quantity }}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-600">Por Contar</span>
-              <span class="text-lg font-bold text-orange-600">{{ Math.max(0, (currentProduct.expected_stock || 0) - (currentProduct.counted_stock || 0)) }}</span>
+              <span class="text-lg font-bold text-orange-600">{{ lastScanInfo.remaining }}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-600">Progreso</span>
-              <span class="text-lg font-bold text-indigo-600">{{ currentProductStats?.progress_percentage || 0 }}%</span>
+              <span class="text-lg font-bold text-indigo-600">{{ lastScanInfo.progress_percentage }}%</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-600">Fecha/Hora</span>
+              <span class="text-xs font-mono text-gray-500">{{ lastScanInfo.timestamp }}</span>
             </div>
           </div>
           <div v-else class="text-center py-8">
             <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-            <p class="text-gray-500 text-sm">Escanea un producto para ver sus estadísticas</p>
+            <p class="text-gray-500 text-sm">Aún no se han realizado escaneos</p>
           </div>
         </div>
 
-        <!-- Resumen del INVENTARIO COMPLETO -->
+        <!-- Producto Anterior -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg class="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+            <svg class="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
             </svg>
-            Resumen del Inventario
+            Producto Anterior
           </h3>
-          <div class="space-y-4">
+          <div v-if="previousProduct" class="space-y-4">
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-600">Total Productos</span>
-              <span class="text-lg font-bold text-blue-600">{{ inventory?.total_products || 0 }}</span>
+              <span class="text-sm text-gray-600">Producto</span>
+              <span class="text-lg font-bold text-purple-600">{{ previousProduct.product_name }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-600">Productos Contados</span>
-              <span class="text-lg font-bold text-green-600">{{ inventory?.counted_products || 0 }}</span>
+              <span class="text-sm text-gray-600">Código</span>
+              <span class="text-lg font-mono text-gray-900">{{ previousProduct.barcode }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-600">Stock Esperado</span>
+              <span class="text-lg font-bold text-purple-600">{{ previousProduct.expected_stock || 0 }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-600">Total Contado</span>
+              <span class="text-lg font-bold text-green-600">{{ previousProduct.counted_stock || 0 }}</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-600">Por Contar</span>
-              <span class="text-lg font-bold text-orange-600">{{ (inventory?.total_products || 0) - (inventory?.counted_products || 0) }}</span>
+              <span class="text-lg font-bold text-orange-600">{{ Math.max(0, (previousProduct.expected_stock || 0) - (previousProduct.counted_stock || 0)) }}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="text-sm text-gray-600">Progreso General</span>
-              <span class="text-lg font-bold text-indigo-600">{{ Math.round(inventory?.progress_percentage || 0) }}%</span>
+              <span class="text-sm text-gray-600">Progreso</span>
+              <span class="text-lg font-bold text-indigo-600">{{ previousProductStats?.progress_percentage || 0 }}%</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-600">Último Escaneo</span>
+              <span class="text-xs font-mono text-gray-500">{{ previousProduct.last_scan_time }}</span>
             </div>
           </div>
-        </div>
-
-        <!-- Reportes rápidos -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Reportes</h3>
-          <div class="space-y-3">
-            <button
-              @click="viewProductReports"
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors duration-300 flex items-center justify-center space-x-2"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <span>Ver Reportes por Producto</span>
-            </button>
-            <button
-              @click="exportInventory"
-              class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors duration-300 flex items-center justify-center space-x-2"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
-              </svg>
-              <span>Exportar a Excel</span>
-            </button>
+          <div v-else class="text-center py-8">
+            <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            <p class="text-gray-500 text-sm">Aún no hay productos anteriores escaneados</p>
           </div>
         </div>
       </div>
     </main>
 
-    <!-- Elementos de audio -->
-    <!-- <audio ref="successSound" preload="auto">
-      <source src="/sounds/success.mp3" type="audio/mpeg">
-    </audio>
-    <audio ref="errorSound" preload="auto">
-      <source src="/sounds/error.mp3" type="audio/mpeg">
-    </audio> -->
+    <!-- Botón flotante para escáner de cámara - SOLO EN MÓVILES -->
+    <button
+      v-if="isMobileDevice && !showQRScanner"
+      @click="openQRScanner"
+      class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 z-40"
+      title="Abrir Escáner de Cámara"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+    </button>
+
+    <!-- Modal del escáner QR SIMPLIFICADO -->
+    <div v-if="showQRScanner" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+        <div class="p-4 border-b border-gray-200 bg-blue-600 text-white rounded-t-lg">
+          <div class="flex justify-between items-center">
+            <h3 class="text-lg font-semibold">Escáner de Códigos</h3>
+            <button @click="closeQRScanner" class="text-white hover:text-blue-200 transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <div class="p-4">
+          <!-- Estado de carga -->
+          <div v-if="qrLoading" class="text-center py-8">
+            <div class="loading-spinner-large mx-auto mb-4"></div>
+            <p class="text-gray-600 font-medium">Inicializando cámara...</p>
+            <p class="text-sm text-gray-500 mt-2">Por favor espera</p>
+          </div>
+
+          <!-- Escáner QR -->
+          <div v-else-if="!qrError" class="scanner-container">
+            <qrcode-stream 
+              @decode="onQRCodeDecoded"
+              @init="onQRScannerInit"
+              :camera="camera"
+              class="rounded-lg overflow-hidden border-2 border-blue-500"
+            >
+              <div class="scanner-overlay">
+                <div class="scanner-frame"></div>
+                <div class="scanner-line"></div>
+              </div>
+            </qrcode-stream>
+            
+            <div class="mt-4 text-center">
+              <p class="text-sm text-gray-600 mb-2 font-medium">
+                📷 Apunta la cámara hacia un código de barras
+              </p>
+              <p class="text-xs text-gray-500">
+                El escaneo es automático
+              </p>
+            </div>
+          </div>
+
+          <!-- Mensaje de error SIMPLIFICADO -->
+          <div v-else class="text-center py-6">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+              <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+              <h4 class="text-lg font-medium text-gray-900 mb-2">No se puede acceder a la cámara</h4>
+              <p class="text-gray-600 mb-4 text-sm">{{ qrError }}</p>
+              
+              <div class="space-y-3">
+                <button 
+                  @click="retryQRScanner"
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-300"
+                >
+                  🔄 Reintentar
+                </button>
+                
+                <button 
+                  @click="useManualInputInstead"
+                  class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg text-sm transition-colors duration-300"
+                >
+                  ⌨️ Usar entrada manual
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useNotifications } from '@/composables/useNotifications'
+import { apiService } from '@/services/api'
+// Importar el escáner QR
+import { QrcodeStream } from 'vue-qrcode-reader'
 
 const route = useRoute()
 const router = useRouter()
@@ -462,13 +541,22 @@ const manualQuantity = ref(1)
 const manualProduct = ref(null)
 const manualProductError = ref(false)
 
-// NUEVAS REFS para información por producto
+// Refs para información por producto
 const currentProduct = ref(null)
 const currentProductStats = ref(null)
+const previousProduct = ref(null)
+const previousProductStats = ref(null)
 
 // Refs para audio
 const successSound = ref(null)
 const errorSound = ref(null)
+
+// Refs para QR Scanner - SIMPLIFICADOS
+const showQRScanner = ref(false)
+const qrLoading = ref(false)
+const qrError = ref('')
+const camera = ref('auto')
+const isMobileDevice = ref(false)
 
 // Computed
 const userInitials = computed(() => {
@@ -481,28 +569,51 @@ const userInitials = computed(() => {
     .slice(0, 2)
 })
 
+// Función para volver a inventarios
+async function goBackToInventories() {
+  try {
+    await router.push('/inventarios')
+  } catch (err) {
+    console.error('Error en navegación:', err)
+    window.location.href = '/'
+  }
+}
+
 // Funciones de sonido
 function playSuccessSound() {
   if (soundEnabled.value && successSound.value) {
-    successSound.value.currentTime = 0
-    successSound.value.play().catch(e => console.log('Error playing sound:', e))
+    try {
+      successSound.value.currentTime = 0
+      successSound.value.play().catch(e => console.log('Error playing sound:', e))
+    } catch (e) {
+      console.log('Error with sound:', e)
+    }
   }
 }
 
 function playErrorSound() {
   if (soundEnabled.value && errorSound.value) {
-    errorSound.value.currentTime = 0
-    errorSound.value.play().catch(e => console.log('Error playing sound:', e))
+    try {
+      errorSound.value.currentTime = 0
+      errorSound.value.play().catch(e => console.log('Error playing sound:', e))
+    } catch (e) {
+      console.log('Error with sound:', e)
+    }
+  }
+}
+
+function initializeSounds() {
+  // Sonidos simples base64
+  if (!successSound.value) {
+    successSound.value = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==')
+  }
+  if (!errorSound.value) {
+    errorSound.value = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==')
   }
 }
 
 function toggleSound() {
   soundEnabled.value = !soundEnabled.value
-  if (soundEnabled.value) {
-    success('Sonido activado', 'Las alertas sonoras están ahora activadas')
-  } else {
-    info('Sonido desactivado', 'Las alertas sonoras están ahora desactivadas')
-  }
 }
 
 // Funciones de modo
@@ -519,7 +630,103 @@ function setMode(newMode) {
   })
 }
 
-// Modo Automático - ACTUALIZADO para manejar información por producto
+// Detección de dispositivo móvil
+function checkMobileDevice() {
+  isMobileDevice.value = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  console.log('Móvil detectado:', isMobileDevice.value)
+}
+
+// Funciones QR Scanner SIMPLIFICADAS
+async function openQRScanner() {
+  console.log('Abriendo escáner QR...')
+  showQRScanner.value = true
+  qrError.value = ''
+  qrLoading.value = true
+  
+  await nextTick()
+}
+
+function closeQRScanner() {
+  showQRScanner.value = false
+  qrError.value = ''
+  qrLoading.value = false
+}
+
+async function onQRScannerInit(promise) {
+  console.log('Inicializando cámara...')
+  try {
+    qrLoading.value = true
+    await promise
+    console.log('✅ Cámara inicializada correctamente')
+    qrLoading.value = false
+  } catch (err) {
+    console.error('❌ Error en cámara:', err)
+    qrError.value = getCameraErrorMessage(err)
+    qrLoading.value = false
+  }
+}
+
+function getCameraErrorMessage(error) {
+  console.log('Tipo de error:', error.name)
+  
+  if (error.name === 'NotAllowedError') {
+    return 'Permiso de cámara denegado. Por favor, permite el acceso a la cámara en tu navegador.'
+  } else if (error.name === 'NotFoundError') {
+    return 'No se encontró ninguna cámara en el dispositivo.'
+  } else if (error.name === 'NotSupportedError') {
+    return 'Tu navegador no soporta acceso a la cámara.'
+  } else if (error.name === 'NotReadableError') {
+    return 'La cámara no se puede leer. Puede que esté siendo usada por otra aplicación.'
+  } else if (error.name === 'OverconstrainedError') {
+    return 'No se puede usar la cámara con la configuración requerida.'
+  } else if (error.name === 'SecurityError') {
+    return 'La cámara requiere HTTPS. Estás en: ' + window.location.protocol + '//' + window.location.host
+  }
+  
+  return `Error: ${error.message || 'Error desconocido'}`
+}
+
+function onQRCodeDecoded(decodedText) {
+  console.log('Código escaneado:', decodedText)
+  
+  if (decodedText && decodedText.trim()) {
+    if (mode.value === 'auto') {
+      autoBarcode.value = decodedText
+      processAutoScan()
+    } else {
+      manualBarcode.value = decodedText
+      searchManualProduct()
+    }
+    
+    closeQRScanner()
+    playSuccessSound()
+    success('✅ Escaneo exitoso', 'Código escaneado correctamente')
+  }
+}
+
+function retryQRScanner() {
+  console.log('Reintentando cámara...')
+  qrError.value = ''
+  qrLoading.value = false
+  showQRScanner.value = false
+  
+  setTimeout(() => {
+    openQRScanner()
+  }, 500)
+}
+
+function useManualInputInstead() {
+  closeQRScanner()
+  nextTick(() => {
+    if (mode.value === 'auto') {
+      autoInput.value?.focus()
+    } else {
+      manualBarcodeInput.value?.focus()
+    }
+  })
+}
+
+// Funciones del sistema de conteo (se mantienen igual)
 async function handleAutoInput() {
   if (autoBarcode.value.trim() && !isProcessing.value) {
     clearTimeout(window.autoScanTimeout)
@@ -544,55 +751,50 @@ async function processAutoScan() {
   isProcessing.value = true
 
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(
-      `http://localhost:3000/api/inventories/${inventoryId}/products/search?barcode=${encodeURIComponent(barcode)}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }
-    )
+    const products = await apiService.searchProducts(inventoryId, barcode)
     
-    if (response.ok) {
-      const products = await response.json()
-      if (products.length > 0) {
-        const product = products[0]
-        const countResult = await registerCount(product.barcode, 1)
-        
-        if (countResult.success) {
-          // ACTUALIZADO: Usar la información específica del producto
-          currentProduct.value = countResult.product
-          currentProductStats.value = countResult.productStats
-          
-          lastScanInfo.value = {
-            barcode: product.barcode,
-            product_name: product.product_name,
-            quantity: 1, // Cantidad escaneada en este momento
-            total_counted: countResult.product.counted_stock, // Total contado hasta ahora
-            expected_stock: countResult.product.expected_stock,
-            remaining: countResult.productStats.remaining,
-            progress_percentage: countResult.productStats.progress_percentage,
-            timestamp: new Date().toLocaleString('es-ES')
-          }
-          
-          scanError.value = false
-          playSuccessSound()
-          success('Producto registrado', `${product.product_name} contado correctamente`)
+    if (products.length > 0) {
+      const product = products[0]
+      const countResult = await registerCount(product.barcode, 1)
+      
+      if (countResult.success) {
+        if (currentProduct.value) {
+          previousProduct.value = { ...currentProduct.value }
+          previousProductStats.value = { ...currentProductStats.value }
+          previousProduct.value.last_scan_time = new Date().toLocaleString('es-ES')
         }
-      } else {
-        scanError.value = true
-        scanErrorBarcode.value = barcode
-        playErrorSound()
-        error('Producto no encontrado', `El código ${barcode} no existe en el sistema`)
-        lastScanInfo.value = null
-        currentProduct.value = null
-        currentProductStats.value = null
+        
+        currentProduct.value = countResult.product
+        currentProductStats.value = countResult.productStats
+        
+        lastScanInfo.value = {
+          barcode: product.barcode,
+          product_name: product.product_name,
+          quantity: 1,
+          total_counted: countResult.product.counted_stock,
+          expected_stock: countResult.product.expected_stock,
+          remaining: countResult.productStats.remaining,
+          progress_percentage: countResult.productStats.progress_percentage,
+          timestamp: new Date().toLocaleString('es-ES')
+        }
+        
+        scanError.value = false
+        playSuccessSound()
+        success('✅ Producto registrado', `${product.product_name} contado correctamente`)
       }
+    } else {
+      scanError.value = true
+      scanErrorBarcode.value = barcode
+      playErrorSound()
+      error('❌ Producto no encontrado', `El código ${barcode} no existe en el sistema`)
+      lastScanInfo.value = null
+      currentProduct.value = null
+      currentProductStats.value = null
     }
   } catch (err) {
+    console.error('Error en escaneo automático:', err)
     playErrorSound()
-    error('Error', 'Error en el escaneo automático')
+    error('❌ Error', 'Error en el escaneo automático')
     scanError.value = false
     currentProduct.value = null
     currentProductStats.value = null
@@ -605,41 +807,30 @@ async function processAutoScan() {
   }
 }
 
-// Modo Manual - ACTUALIZADO
 async function searchManualProduct() {
   if (!manualBarcode.value.trim()) {
     playErrorSound()
-    error('Error', 'Ingresa un código de barras')
+    error('❌ Error', 'Ingresa un código de barras')
     return
   }
 
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(
-      `http://localhost:3000/api/inventories/${inventoryId}/products/search?barcode=${encodeURIComponent(manualBarcode.value)}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }
-    )
+    const products = await apiService.searchProducts(inventoryId, manualBarcode.value)
     
-    if (response.ok) {
-      const products = await response.json()
-      if (products.length > 0) {
-        manualProduct.value = products[0]
-        manualProductError.value = false
-        playSuccessSound()
-      } else {
-        manualProduct.value = null
-        manualProductError.value = true
-        playErrorSound()
-        error('Producto no encontrado', `El código ${manualBarcode.value} no existe en el sistema`)
-      }
+    if (products.length > 0) {
+      manualProduct.value = products[0]
+      manualProductError.value = false
+      playSuccessSound()
+    } else {
+      manualProduct.value = null
+      manualProductError.value = true
+      playErrorSound()
+      error('❌ Producto no encontrado', `El código ${manualBarcode.value} no existe en el sistema`)
     }
   } catch (err) {
+    console.error('Error buscando producto:', err)
     playErrorSound()
-    error('Error', 'Error al buscar el producto')
+    error('❌ Error', 'Error al buscar el producto')
     manualProductError.value = false
   }
 }
@@ -647,14 +838,19 @@ async function searchManualProduct() {
 async function registerManualCount() {
   if (!manualProduct.value || !manualQuantity.value) {
     playErrorSound()
-    error('Error', 'Completa todos los campos')
+    error('❌ Error', 'Completa todos los campos')
     return
   }
   
   const result = await registerCount(manualProduct.value.barcode, manualQuantity.value)
   
   if (result.success) {
-    // ACTUALIZADO: Usar la información específica del producto
+    if (currentProduct.value) {
+      previousProduct.value = { ...currentProduct.value }
+      previousProductStats.value = { ...currentProductStats.value }
+      previousProduct.value.last_scan_time = new Date().toLocaleString('es-ES')
+    }
+    
     currentProduct.value = result.product
     currentProductStats.value = result.productStats
     
@@ -680,103 +876,116 @@ async function registerManualCount() {
   }
 }
 
-// Función común para registrar conteo - ACTUALIZADA
 async function registerCount(barcode, quantity) {
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(`http://localhost:3000/api/inventories/${inventoryId}/count`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        barcode: barcode,
-        quantity: quantity
-      })
-    })
-
-    const data = await response.json()
-    
-    if (response.ok) {
-      await fetchInventory()
-      return {
-        success: true,
-        product: data.product,
-        productStats: data.productStats
-      }
-    } else {
-      playErrorSound()
-      error('Error', data.error || 'Error al registrar el conteo')
-      return { success: false }
+    const response = await apiService.registerCount(inventoryId, barcode, quantity)
+    await fetchInventory()
+    return {
+      success: true,
+      product: response.product,
+      productStats: response.productStats
     }
   } catch (err) {
+    console.error('Error registrando conteo:', err)
     playErrorSound()
-    error('Error', 'Error al registrar el conteo')
+    error('❌ Error', err.message || 'Error al registrar el conteo')
     return { success: false }
   }
 }
 
 async function fetchInventory() {
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(`http://localhost:3000/api/inventories/${inventoryId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (response.ok) {
-      inventory.value = await response.json()
-    } else {
-      error('Error', 'No se pudo cargar la información del inventario')
-    }
+    inventory.value = await apiService.getInventory(inventoryId)
   } catch (err) {
-    error('Error', 'Error al cargar el inventario')
-  }
-}
-
-function viewProductReports() {
-  router.push(`/reportes/${inventoryId}`)
-}
-
-async function exportInventory() {
-  try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(
-      `http://localhost:3000/api/inventories/${inventoryId}/export?format=excel`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      }
-    )
-
-    if (response.ok) {
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.style.display = 'none'
-      a.href = url
-      a.download = `inventario_${inventory.value.name}_${new Date().toISOString().split('T')[0]}.xlsx`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-      success('Éxito', 'Inventario exportado exitosamente')
-    } else {
-      error('Error', 'Error al exportar el inventario')
-    }
-  } catch (err) {
-    error('Error', 'Error al exportar el inventario')
+    console.error('Error cargando inventario:', err)
+    error('❌ Error', 'Error al cargar el inventario')
   }
 }
 
 onMounted(() => {
+  initializeSounds()
+  checkMobileDevice()
   fetchInventory()
   nextTick(() => {
     autoInput.value?.focus()
   })
 })
+
+onUnmounted(() => {
+  closeQRScanner()
+})
 </script>
+
+<style scoped>
+/* Estilos para móviles */
+@media (max-width: 768px) {
+  .grid-cols-1, .grid-cols-2, .lg\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  button {
+    min-height: 44px;
+  }
+  
+  input {
+    font-size: 16px;
+  }
+}
+
+/* Estilos del escáner */
+.scanner-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.scanner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.scanner-frame {
+  width: 250px;
+  height: 150px;
+  border: 2px solid #00ff00;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.scanner-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: #00ff00;
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+  0% { top: 0; }
+  50% { top: 100%; }
+  100% { top: 0; }
+}
+
+.loading-spinner-large {
+  width: 60px;
+  height: 60px;
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>

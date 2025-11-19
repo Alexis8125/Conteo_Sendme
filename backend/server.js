@@ -139,12 +139,13 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Obtener inventarios del usuario
+// En el endpoint GET /api/inventories
 app.get('/api/inventories', authenticateToken, async (req, res) => {
     try {
         console.log('Fetching inventories for user:', req.user.id);
         const connection = await mysql.createConnection(dbConfig);
         
-        // Consulta MEJORADA para incluir unidades
+        // Consulta MEJORADA para calcular progreso basado en UNIDADES
         const [inventories] = await connection.execute(`
             SELECT 
                 i.*, 
@@ -152,13 +153,13 @@ app.get('/api/inventories', authenticateToken, async (req, res) => {
                 -- Calcular unidades totales y contadas
                 COALESCE(SUM(ip.expected_stock), 0) as total_units,
                 COALESCE(SUM(ip.counted_stock), 0) as counted_units,
-                -- Calcular productos contados (solo los que tienen counted_stock > 0)
+                -- Calcular productos totales y contados
                 COUNT(ip.id) as total_products,
                 SUM(CASE WHEN ip.counted_stock IS NOT NULL AND ip.counted_stock > 0 THEN 1 ELSE 0 END) as counted_products,
-                -- Calcular progreso correctamente
+                -- Calcular progreso basado en UNIDADES (no en productos)
                 CASE 
-                    WHEN COUNT(ip.id) > 0 THEN 
-                        (SUM(CASE WHEN ip.counted_stock IS NOT NULL AND ip.counted_stock > 0 THEN 1 ELSE 0 END) / COUNT(ip.id)) * 100 
+                    WHEN COALESCE(SUM(ip.expected_stock), 0) > 0 THEN 
+                        (COALESCE(SUM(ip.counted_stock), 0) / COALESCE(SUM(ip.expected_stock), 0)) * 100 
                     ELSE 0 
                 END as progress_percentage
             FROM inventories i 
@@ -284,55 +285,50 @@ app.put('/api/inventories/:id', authenticateToken, async (req, res) => {
 });
 
 // Eliminar inventario
-app.get('/api/inventories/:id', authenticateToken, async (req, res) => {
+// Eliminar inventario - CORREGIDO
+app.delete('/api/inventories/:id', authenticateToken, async (req, res) => {
     try {
         const inventoryId = req.params.id;
-        console.log('Fetching inventory:', inventoryId, 'for user:', req.user.id);
-        
+        console.log('Deleting inventory:', inventoryId, 'for user:', req.user.id);
+
         const connection = await mysql.createConnection(dbConfig);
         
-        const [inventories] = await connection.execute(`
-            SELECT i.*, u.full_name as created_by_name 
-            FROM inventories i 
-            LEFT JOIN users u ON i.created_by = u.id 
-            WHERE i.id = ? AND i.created_by = ?
-        `, [inventoryId, req.user.id]);
+        // Verificar que el inventario existe y pertenece al usuario
+        const [inventories] = await connection.execute(
+            'SELECT * FROM inventories WHERE id = ? AND created_by = ?',
+            [inventoryId, req.user.id]
+        );
 
         if (inventories.length === 0) {
             connection.end();
-            console.log('Inventory not found:', inventoryId);
+            console.log('Inventory not found for deletion:', inventoryId);
             return res.status(404).json({ error: 'Inventario no encontrado' });
         }
 
-        const inventory = inventories[0];
+        // Primero eliminar los productos asociados
+        await connection.execute(
+            'DELETE FROM inventory_products WHERE inventory_id = ?',
+            [inventoryId]
+        );
 
-        // RECALCULAR ESTADÍSTICAS EN TIEMPO REAL
-        const [stats] = await connection.execute(`
-            SELECT 
-                COUNT(*) as total_products,
-                SUM(CASE WHEN counted_stock IS NOT NULL AND counted_stock > 0 THEN 1 ELSE 0 END) as counted_products,
-                CASE 
-                    WHEN COUNT(*) > 0 THEN 
-                        (SUM(CASE WHEN counted_stock IS NOT NULL AND counted_stock > 0 THEN 1 ELSE 0 END) / COUNT(*)) * 100 
-                    ELSE 0 
-                END as progress_percentage
-            FROM inventory_products 
-            WHERE inventory_id = ?
-        `, [inventoryId]);
-
-        // Actualizar el objeto inventory con stats en tiempo real
-        inventory.total_products = stats[0].total_products;
-        inventory.counted_products = stats[0].counted_products;
-        inventory.progress_percentage = stats[0].progress_percentage;
+        // Luego eliminar el inventario
+        await connection.execute(
+            'DELETE FROM inventories WHERE id = ?',
+            [inventoryId]
+        );
 
         connection.end();
-        res.json(inventory);
+        console.log('Inventory deleted successfully:', inventoryId);
+        
+        res.json({ 
+            success: true,
+            message: 'Inventario eliminado exitosamente' 
+        });
     } catch (error) {
-        console.error('Error getting inventory:', error);
+        console.error('Error deleting inventory:', error);
         res.status(500).json({ error: 'Error del servidor' });
     }
 });
-
 // Cargar productos desde Excel
 app.post('/api/inventories/:id/upload', authenticateToken, upload.single('file'), async (req, res) => {
     let connection;
@@ -806,6 +802,7 @@ app.post('/api/inventories/:id/count', authenticateToken, async (req, res) => {
 });
 
 // Exportar inventario
+// En el endpoint de exportación, modificar la sección de Excel:
 app.get('/api/inventories/:id/export', authenticateToken, async (req, res) => {
     let connection;
     try {
@@ -830,7 +827,7 @@ app.get('/api/inventories/:id/export', authenticateToken, async (req, res) => {
 
         const inventory = inventories[0];
 
-        // Obtener productos del inventario
+        // Obtener productos del inventario CON FECHA Y HORA
         const [products] = await connection.execute(`
             SELECT 
                 barcode,
@@ -863,8 +860,8 @@ app.get('/api/inventories/:id/export', authenticateToken, async (req, res) => {
         console.log(`Found ${products.length} products to export`);
 
         if (format === 'csv') {
-            // Exportar como CSV
-            const csvHeaders = ['Código Barras', 'SKU', 'Producto', 'Stock Esperado', 'Stock Contado', 'Diferencia', 'Estado', 'Fecha Conteo'];
+            // Exportar como CSV con fecha y hora
+            const csvHeaders = ['Código Barras', 'SKU', 'Producto', 'Stock Esperado', 'Stock Contado', 'Diferencia', 'Estado', 'Fecha Conteo', 'Hora Conteo'];
             const csvData = products.map(product => [
                 product.barcode || '',
                 product.sku || '',
@@ -873,7 +870,8 @@ app.get('/api/inventories/:id/export', authenticateToken, async (req, res) => {
                 product.counted_stock || 0,
                 product.diferencia || 0,
                 product.status || '',
-                product.count_date ? new Date(product.count_date).toLocaleDateString('es-ES') : ''
+                product.count_date ? new Date(product.count_date).toLocaleDateString('es-ES') : '',
+                product.count_date ? new Date(product.count_date).toLocaleTimeString('es-ES') : ''
             ]);
 
             const csvContent = [
@@ -888,12 +886,12 @@ app.get('/api/inventories/:id/export', authenticateToken, async (req, res) => {
             res.send(csvContent);
 
         } else {
-            // Exportar como Excel (por defecto)
+            // Exportar como Excel (por defecto) CON FECHA Y HORA COMPLETA
             const workbook = XLSX.utils.book_new();
             
-            // Crear hoja de datos principal
+            // Crear hoja de datos principal CON FECHA Y HORA SEPARADAS
             const worksheetData = [
-                ['Código Barras', 'SKU', 'Producto', 'Stock Esperado', 'Stock Contado', 'Diferencia', 'Estado', 'Fecha Conteo'],
+                ['Código Barras', 'SKU', 'Producto', 'Stock Esperado', 'Stock Contado', 'Diferencia', 'Estado', 'Fecha Conteo', 'Hora Conteo'],
                 ...products.map(product => [
                     product.barcode || '',
                     product.sku || '',
@@ -902,7 +900,12 @@ app.get('/api/inventories/:id/export', authenticateToken, async (req, res) => {
                     product.counted_stock || 0,
                     product.diferencia || 0,
                     product.status || '',
-                    product.count_date ? new Date(product.count_date).toLocaleDateString('es-ES') : ''
+                    product.count_date ? new Date(product.count_date).toLocaleDateString('es-ES') : '',
+                    product.count_date ? new Date(product.count_date).toLocaleTimeString('es-ES', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        second: '2-digit'
+                    }) : ''
                 ])
             ];
 
@@ -927,7 +930,7 @@ app.get('/api/inventories/:id/export', authenticateToken, async (req, res) => {
 
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventario');
 
-            // Crear hoja de resumen
+            // Crear hoja de resumen CON FECHA Y HORA DE EXPORTACIÓN
             const totalProducts = products.length;
             const countedProducts = products.filter(p => p.status === 'CONTADO').length;
             const pendingProducts = totalProducts - countedProducts;
@@ -939,6 +942,11 @@ app.get('/api/inventories/:id/export', authenticateToken, async (req, res) => {
                 ['Nombre del Inventario:', inventory.name],
                 ['Descripción:', inventory.description || ''],
                 ['Fecha de Exportación:', new Date().toLocaleDateString('es-ES')],
+                ['Hora de Exportación:', new Date().toLocaleTimeString('es-ES', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                })],
                 [''],
                 ['ESTADÍSTICAS'],
                 ['Total de Productos:', totalProducts],
@@ -949,13 +957,18 @@ app.get('/api/inventories/:id/export', authenticateToken, async (req, res) => {
                 ['INFORMACIÓN DEL INVENTARIO'],
                 ['Creado por:', inventory.created_by_name || ''],
                 ['Fecha de Creación:', new Date(inventory.created_at).toLocaleDateString('es-ES')],
-                ['Última Actualización:', inventory.updated_at ? new Date(inventory.updated_at).toLocaleDateString('es-ES') : '']
+                ['Hora de Creación:', new Date(inventory.created_at).toLocaleTimeString('es-ES')],
+                ['Última Actualización:', inventory.updated_at ? new Date(inventory.updated_at).toLocaleDateString('es-ES') : ''],
+                ['Hora Última Actualización:', inventory.updated_at ? new Date(inventory.updated_at).toLocaleTimeString('es-ES') : '']
             ];
 
             const summaryWorksheet = XLSX.utils.aoa_to_sheet(summaryData);
             XLSX.utils.book_append_sheet(workbook, summaryWorksheet, 'Resumen');
 
-            const filename = `inventario_${inventory.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+            // Nombre del archivo con fecha y hora completas
+            const now = new Date();
+            const timestamp = now.toISOString().slice(0,19).replace(/:/g, '-');
+            const filename = `inventario_${inventory.name}_${timestamp}.xlsx`;
 
             // Convertir a buffer y enviar
             const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
@@ -991,6 +1004,62 @@ app.get('/api/health', async (req, res) => {
             status: 'ERROR', 
             message: 'Error en la base de datos: ' + error.message 
         });
+    }
+});
+
+// Agregar este endpoint al server.js para obtener datos de reportes
+app.get('/api/inventories/:id/products/report', authenticateToken, async (req, res) => {
+    try {
+        const inventoryId = req.params.id;
+
+        console.log('Fetching products report for inventory:', inventoryId);
+
+        const connection = await mysql.createConnection(dbConfig);
+        
+        // Verificar que el inventario pertenece al usuario
+        const [inventories] = await connection.execute(
+            'SELECT * FROM inventories WHERE id = ? AND created_by = ?',
+            [inventoryId, req.user.id]
+        );
+
+        if (inventories.length === 0) {
+            connection.end();
+            return res.status(404).json({ error: 'Inventario no encontrado' });
+        }
+
+        // Obtener productos con información completa para reportes
+        const [products] = await connection.execute(`
+            SELECT 
+                ip.*,
+                u.full_name as counted_by_name,
+                CASE 
+                    WHEN ip.counted_stock IS NULL OR ip.counted_stock = 0 THEN 'not-counted'
+                    WHEN ip.counted_stock > ip.expected_stock THEN 'excess'
+                    WHEN ip.counted_stock < ip.expected_stock THEN 'shortage'
+                    ELSE 'exact'
+                END as status,
+                (ip.counted_stock - ip.expected_stock) as difference,
+                CASE 
+                    WHEN ip.expected_stock > 0 THEN 
+                        ROUND(((ip.counted_stock - ip.expected_stock) / ip.expected_stock) * 100, 2)
+                    ELSE 0
+                END as difference_percentage,
+                CASE 
+                    WHEN ip.expected_stock > 0 THEN 
+                        ROUND((ip.counted_stock / ip.expected_stock) * 100, 2)
+                    ELSE 0
+                END as progress_percentage
+            FROM inventory_products ip
+            LEFT JOIN users u ON ip.counted_by = u.id
+            WHERE ip.inventory_id = ?
+            ORDER BY ip.product_name, ip.barcode
+        `, [inventoryId]);
+
+        connection.end();
+        res.json(products);
+    } catch (error) {
+        console.error('Error getting products report:', error);
+        res.status(500).json({ error: 'Error del servidor' });
     }
 });
 

@@ -1,10 +1,11 @@
 <!-- src/views/InventariosView.vue -->
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
+    <!-- Header Responsive -->
     <header class="bg-white shadow-sm border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 sm:py-0 sm:h-16 space-y-4 sm:space-y-0">
+          <!-- Logo y título -->
           <div class="flex items-center space-x-4">
             <div class="bg-blue-600 text-white p-2 rounded-lg">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -16,12 +17,13 @@
               <p class="text-sm text-gray-500">Conteo de inventarios</p>
             </div>
           </div>
-          <div class="flex items-center space-x-4">
-            
-            <span class="text-sm text-gray-700">Hola, {{ user?.full_name }}</span>
+          
+          <!-- Información de usuario y logout -->
+          <div class="flex items-center justify-between sm:justify-end space-x-4">
+            <span class="text-sm text-gray-700 hidden sm:block">Hola, {{ user?.full_name }}</span>
             <button
               @click="handleLogout"
-              class="flex items-center space-x-1 text-sm text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 py-2 px-3 rounded-lg transition-colors duration-200"
+              class="flex items-center space-x-1 text-sm text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 py-2 px-3 rounded-lg transition-colors duration-200 w-full sm:w-auto justify-center"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -36,45 +38,50 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <!-- Tabla de inventarios -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <!-- Header de la tabla con búsqueda y acciones -->
-        <div class="flex justify-between items-center p-4 border-b border-gray-200">
-          <div class="flex items-center space-x-4">
-            <h2 class="text-lg font-bold text-gray-900 flex items-center">
+        <!-- Header de la tabla reorganizado para móvil -->
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center p-4 border-b border-gray-200 space-y-4 lg:space-y-0">
+          <!-- Título y búsqueda -->
+          <div class="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <h2 class="text-lg font-bold text-gray-900 flex items-center mb-4 sm:mb-0">
               <svg class="w-5 h-5 text-gray-700 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
               </svg>
               Inventarios
             </h2>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
+            
+            <div class="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                </div>
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm w-full"
+                  placeholder="Buscar inventarios..."
+                >
               </div>
-              <input
-                v-model="searchQuery"
-                type="text"
-                class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
-                placeholder="Buscar inventarios..."
-              >
               
+              <button
+                @click="showCreateModal = true"
+                class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2 justify-center sm:justify-start"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <span>Crear Inventario</span>
+              </button>
             </div>
-            <button
-              @click="showCreateModal = true"
-              class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-300 flex items-center space-x-2"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-              </svg>
-              <span>Crear Inventario</span>
-            </button>
           </div>
           
-          <!-- Acciones con iconos -->
-          <div class="flex items-center space-x-2">
+          <!-- Acciones - reorganizadas para móvil -->
+          <div class="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-2">
+            <!-- Botón de actualizar siempre visible -->
             <button
               @click="refreshInventories"
-              class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 self-start"
               title="Actualizar"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,60 +91,130 @@
             
             <!-- Acciones para inventario seleccionado -->
             <template v-if="selectedInventory">
-              <button
-                @click="editInventory(selectedInventory)"
-                class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                title="Editar"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                </svg>
-              </button>
-              <button
-                @click="uploadProducts(selectedInventory)"
-                class="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
-                title="Cargar Excel"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                </svg>
-              </button>
-              <button
-                @click="startCounting(selectedInventory)"
-                class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                title="Iniciar Conteo"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </button>
-              <button
-                @click="viewReports(selectedInventory)"
-                class="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors duration-200"
-                title="Ver Reportes"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-              </button>
-              <button
-                @click="deleteInventory(selectedInventory)"
-                class="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                title="Eliminar"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-              </button>
-              <button
-                @click="clearSelection"
-                class="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                title="Cancelar selección"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
+              <div class="flex flex-wrap gap-2">
+                <!-- Botones principales visibles -->
+                <button
+                  @click="editInventory(selectedInventory)"
+                  class="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                  title="Editar"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button
+                  @click="startCounting(selectedInventory)"
+                  class="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                  title="Iniciar Conteo"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </button>
+                
+                <!-- Dropdown para acciones secundarias en móvil - POSICIÓN CORREGIDA -->
+                <div class="relative sm:hidden">
+                  <button
+                    @click="toggleMobileActions"
+                    class="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path>
+                    </svg>
+                  </button>
+                  <!-- Dropdown posicionado a la izquierda para evitar desbordamiento -->
+                  <div 
+                    v-if="showMobileActions" 
+                    class="fixed inset-0 z-50 sm:hidden"
+                    @click="showMobileActions = false"
+                  >
+                    <div class="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
+                      <div class="p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Acciones</h3>
+                        <p class="text-sm text-gray-600">{{ selectedInventory.name }}</p>
+                      </div>
+                      <div class="p-2">
+                        <button
+                          @click="uploadProducts(selectedInventory); showMobileActions = false"
+                          class="flex items-center space-x-3 w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 rounded-lg"
+                        >
+                          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                          </svg>
+                          <span>Cargar Excel</span>
+                        </button>
+                        <button
+                          @click="viewReports(selectedInventory); showMobileActions = false"
+                          class="flex items-center space-x-3 w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-100 rounded-lg"
+                        >
+                          <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                          </svg>
+                          <span>Ver Reportes</span>
+                        </button>
+                        <button
+                          @click="deleteInventory(selectedInventory); showMobileActions = false"
+                          class="flex items-center space-x-3 w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 rounded-lg"
+                        >
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                          </svg>
+                          <span>Eliminar</span>
+                        </button>
+                      </div>
+                      <div class="p-4 border-t border-gray-200">
+                        <button
+                          @click="showMobileActions = false"
+                          class="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors duration-300"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Acciones secundarias visibles en desktop -->
+                <div class="hidden sm:flex sm:space-x-2">
+                  <button
+                    @click="uploadProducts(selectedInventory)"
+                    class="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                    title="Cargar Excel"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                  </button>
+                  <button
+                    @click="viewReports(selectedInventory)"
+                    class="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                    title="Ver Reportes"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                  </button>
+                  <button
+                    @click="deleteInventory(selectedInventory)"
+                    class="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                    title="Eliminar"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </div>
+                
+                <button
+                  @click="clearSelection"
+                  class="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                  title="Cancelar selección"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
             </template>
           </div>
         </div>
@@ -157,16 +234,19 @@
           :selectedRow="selectedInventory"
           @row-double-click="handleRowDoubleClick"
         >
-          <!-- Slot para progreso -->
+          <!-- Slot para progreso basado en unidades -->
           <template #custom-progress="{ data }">
             <div class="flex flex-col items-center">
               <div class="w-full bg-gray-200 rounded-full h-2 mb-1">
                 <div
                   class="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-                  :style="{ width: `${data.progress_percentage}%` }"
+                  :style="{ width: `${calculateUnitProgress(data)}%` }"
                 ></div>
               </div>
-              <span class="text-xs text-gray-600">{{ Math.round(data.progress_percentage) }}%</span>
+              <span class="text-xs text-gray-600">{{ Math.round(calculateUnitProgress(data)) }}%</span>
+              <span class="text-xs text-gray-400">
+                {{ data.counted_units || 0 }}/{{ data.total_units || 0 }} unidades
+              </span>
             </div>
           </template>
 
@@ -380,6 +460,7 @@
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useNotifications } from '@/composables/useNotifications'
+import { apiService } from '@/services/api'
 import AppTable from '@/components/atoms/AppTable.vue'
 
 const router = useRouter()
@@ -394,6 +475,7 @@ const searchQuery = ref('')
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
+const showMobileActions = ref(false)
 const editingInventory = ref({ id: null, name: '', description: '' })
 const deletingInventory = ref(null)
 const nameInput = ref(null)
@@ -420,18 +502,19 @@ const tableHeaders = ref([
   { field: 'description', header: 'Descripción', width: '200px' },
   { field: 'total_products', header: 'Productos', width: '100px' },
   { field: 'total_units', header: 'Unidades', width: '100px' },
-  { field: 'counted_products', header: 'Contados', width: '100px' },
-  { field: 'counted_units', header: 'Unid. Contadas', width: '120px' },
+  { field: 'counted_products', header: 'Productos Contados', width: '160px' },
+  { field: 'counted_units', header: 'Unid. Contadas', width: '160px' },
   { field: 'progress', header: 'Progreso', width: '120px' },
   { field: 'created_at', header: 'Creado', width: '120px' },
-  { field: 'created_by_name', header: 'Creado por', width: '150px' }
+  { field: 'created_by_name', header: 'Creado por', width: '150px' },
+  { field: 'updated_at', header: 'Última Actualización', width: '150px' }
 ])
 
 // Datos formateados para la tabla
 const tableData = computed(() => {
   return inventories.value.map(inventory => ({
     ...inventory,
-    progress: inventory.progress_percentage,
+    progress: calculateUnitProgress(inventory),
     created_at: formatDateForTable(inventory.created_at)
   }))
 })
@@ -447,6 +530,17 @@ const filteredTableData = computed(() => {
     inventory.created_by_name?.toLowerCase().includes(query)
   )
 })
+
+// Función para calcular progreso basado en unidades
+function calculateUnitProgress(inventory) {
+  const totalUnits = inventory.total_units || 0
+  const countedUnits = inventory.counted_units || 0
+  
+  if (totalUnits === 0) return 0
+  
+  const progress = (countedUnits / totalUnits) * 100
+  return Math.min(100, Math.max(0, progress))
+}
 
 // Funciones de formato
 function formatDate(dateString) {
@@ -485,6 +579,12 @@ function handleRowDoubleClick(inventory) {
 // Limpiar selección
 function clearSelection() {
   selectedInventory.value = null
+  showMobileActions.value = false
+}
+
+// Toggle acciones móviles
+function toggleMobileActions() {
+  showMobileActions.value = !showMobileActions.value
 }
 
 // Refrescar inventarios
@@ -493,24 +593,24 @@ function refreshInventories() {
   success('Actualizado', 'Lista de inventarios actualizada')
 }
 
-// Funciones CRUD
+// Funciones CRUD usando el servicio de API
 async function fetchInventories() {
   loading.value = true
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch('http://localhost:3000/api/inventories', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    if (response.ok) {
-      inventories.value = await response.json()
-    } else {
-      error('Error', 'No se pudieron cargar los inventarios')
-    }
+    const data = await apiService.getInventories()
+    // Asegurarse de que los valores numéricos sean correctos
+    inventories.value = data.map(inv => ({
+      ...inv,
+      total_units: Number(inv.total_units) || 0,
+      counted_units: Number(inv.counted_units) || 0,
+      total_products: Number(inv.total_products) || 0,
+      counted_products: Number(inv.counted_products) || 0
+    }))
+    console.log('Inventarios cargados:', inventories.value)
   } catch (err) {
-    error('Error de conexión', 'No se pudo conectar con el servidor')
+    if (err.message !== 'Unauthorized') {
+      error('Error de conexión', 'No se pudo conectar con el servidor')
+    }
   } finally {
     loading.value = false
   }
@@ -557,40 +657,26 @@ async function createInventory() {
   creatingInventory.value = true
   
   try {
-    const token = localStorage.getItem('token')
+    const data = await apiService.createInventory(newInventory.value)
+    const inventoryId = data.id
     
-    // Crear el inventario
-    const response = await fetch('http://localhost:3000/api/inventories', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(newInventory.value)
-    })
-    
-    const data = await response.json()
-    if (response.ok) {
-      const inventoryId = data.id
-      
-      // Si hay un archivo seleccionado, cargarlo inmediatamente
-      if (selectedFile.value) {
-        await uploadFile(inventoryId, selectedFile.value, false)
-      }
-      
-      // Limpiar formulario y cerrar modal
-      newInventory.value = { name: '', description: '' }
-      clearSelectedFile()
-      showCreateModal.value = false
-      
-      // Actualizar lista
-      fetchInventories()
-      success('Éxito', 'Inventario creado exitosamente' + (selectedFile.value ? ' con productos cargados' : ''))
-    } else {
-      error('Error', data.error || 'Error al crear el inventario')
+    // Si hay un archivo seleccionado, cargarlo inmediatamente
+    if (selectedFile.value) {
+      await apiService.uploadProducts(inventoryId, selectedFile.value, false)
     }
+    
+    // Limpiar formulario y cerrar modal
+    newInventory.value = { name: '', description: '' }
+    clearSelectedFile()
+    showCreateModal.value = false
+    
+    // Actualizar lista
+    fetchInventories()
+    success('Éxito', 'Inventario creado exitosamente' + (selectedFile.value ? ' con productos cargados' : ''))
   } catch (err) {
-    error('Error', 'Error al crear el inventario')
+    if (err.message !== 'Unauthorized') {
+      error('Error', err.message || 'Error al crear el inventario')
+    }
   } finally {
     creatingInventory.value = false
   }
@@ -610,29 +696,18 @@ function editInventory(inventory) {
 
 async function updateInventory() {
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(`http://localhost:3000/api/inventories/${editingInventory.value.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        name: editingInventory.value.name,
-        description: editingInventory.value.description
-      })
+    await apiService.updateInventory(editingInventory.value.id, {
+      name: editingInventory.value.name,
+      description: editingInventory.value.description
     })
     
-    const data = await response.json()
-    if (response.ok) {
-      showEditModal.value = false
-      fetchInventories()
-      success('Éxito', 'Inventario actualizado exitosamente')
-    } else {
-      error('Error', data.error || 'Error al actualizar el inventario')
-    }
+    showEditModal.value = false
+    fetchInventories()
+    success('Éxito', 'Inventario actualizado exitosamente')
   } catch (err) {
-    error('Error', 'Error al actualizar el inventario')
+    if (err.message !== 'Unauthorized') {
+      error('Error', err.message || 'Error al actualizar el inventario')
+    }
   }
 }
 
@@ -643,24 +718,14 @@ function deleteInventory(inventory) {
 
 async function confirmDelete() {
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(`http://localhost:3000/api/inventories/${deletingInventory.value.id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-    
-    const data = await response.json()
-    if (response.ok) {
-      showDeleteModal.value = false
-      fetchInventories()
-      success('Éxito', 'Inventario eliminado exitosamente')
-    } else {
-      error('Error', data.error || 'Error al eliminar el inventario')
-    }
+    await apiService.deleteInventory(deletingInventory.value.id)
+    showDeleteModal.value = false
+    fetchInventories()
+    success('Éxito', 'Inventario eliminado exitosamente')
   } catch (err) {
-    error('Error', 'Error al eliminar el inventario')
+    if (err.message !== 'Unauthorized') {
+      error('Error', err.message || 'Error al eliminar el inventario')
+    }
   }
 }
 
@@ -679,47 +744,17 @@ function uploadProducts(inventory) {
 
 async function uploadFile(inventoryId, file, overwrite = false) {
   try {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      error('Error de autenticación', 'No se encontró el token. Por favor, inicia sesión nuevamente.')
-      handleLogout()
-      return
-    }
-
-    const formData = new FormData()
-    formData.append('file', file)
-    if (overwrite) {
-      formData.append('overwrite', 'true')
-    }
+    const data = await apiService.uploadProducts(inventoryId, file, overwrite)
     
-    const response = await fetch(`http://localhost:3000/api/inventories/${inventoryId}/upload`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData
-    })
-
-    if (response.status === 403) {
-      error('Error de autenticación', 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.')
-      handleLogout()
-      return
+    success('Éxito', data.message)
+    if (data.errorDetails && data.errorDetails.length > 0) {
+      info('Advertencias', `Algunas filas tuvieron errores: ${data.errorDetails.join(', ')}`)
     }
-
-    const data = await response.json()
-    
-    if (response.ok) {
-      success('Éxito', data.message)
-      if (data.errorDetails && data.errorDetails.length > 0) {
-        info('Advertencias', `Algunas filas tuvieron errores: ${data.errorDetails.join(', ')}`)
-      }
-      fetchInventories()
-    } else {
-      error('Error', data.error || 'Error al cargar el archivo')
-    }
+    fetchInventories()
   } catch (err) {
-    console.error('Upload error:', err)
-    error('Error de conexión', 'No se pudo conectar con el servidor. Verifica que esté ejecutándose.')
+    if (err.message !== 'Unauthorized') {
+      error('Error', err.message || 'Error al cargar el archivo')
+    }
   }
 }
 
@@ -766,5 +801,28 @@ onMounted(() => {
 .modal-content-leave-to {
   opacity: 0;
   transform: scale(1.1);
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Animación para el modal de acciones móviles */
+.mobile-actions-enter-active,
+.mobile-actions-leave-active {
+  transition: all 0.3s ease;
+}
+
+.mobile-actions-enter-from {
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+.mobile-actions-leave-to {
+  opacity: 0;
+  transform: translateY(100%);
 }
 </style>

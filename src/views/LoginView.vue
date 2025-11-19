@@ -88,13 +88,13 @@ async function handleLogin() {
   try {
     console.log('Intentando login...', credentials.value)
     
-    const response = await fetch('http://localhost:3000/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(credentials.value)
-    })
+    const response = await fetch('http://192.168.11.150:3000/api/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(credentials.value)
+})
     
     const data = await response.json()
     console.log('Respuesta completa:', data)

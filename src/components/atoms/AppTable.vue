@@ -1,4 +1,256 @@
 <!-- src/components/atoms/AppTable.vue -->
+<template>
+  <div :class="containerClasses">
+    <Card
+      v-bind="forwardedAttrs"
+      :class="cardClass"
+      :pt="{ ...pt, body: { style: 'padding: 0.8rem !important;' } }"
+      :pt-options="ptOptions"
+    >
+      <template #content>
+        <div class="relative flex flex-col" :class="tableContentClasses">
+          <ContextMenu
+            v-if="contextMenu"
+            ref="contextMenuRef"
+            :model="menuModel"
+            @hide="selectedRow = null"
+          />
+
+          <div class="flex-1 min-h-0 overflow-hidden">
+            <!-- Vista de escritorio -->
+            <DataTable
+              v-if="!isMdScreen"
+              v-model:selection="selectedRow"
+              :value="data"
+              :size="tableSize"
+              v-model:contextMenuSelection="selectedRow"
+              @rowContextmenu="onRowContextMenu"
+              @rowDblclick="handleRowDoubleClick"
+              :selectionMode="multipleSelection ? 'multiple' : 'single'"
+              :removableSort="removableSort"
+              :resizableColumns="resizableColumns"
+              :reorderableColumns="reorderableColumns"
+              :scrollable="true"
+              :scrollHeight="'flex'"
+              :virtualScrollerOptions="virtualScrollerOptions"
+              :showGridlines="showGridlines"
+              :stripedRows="stripedRows"
+              tableStyle="min-width: 50rem"
+              :class="tableClasses"
+              :contextMenu="contextMenu"
+              @column-resize-end="emit('column-resize-end', $event)"
+              @column-reorder="emit('column-reorder', $event)"
+              :loading="loading"
+              :emptyMessage="emptyMessage"
+              :rowClass="rowClass"
+            >
+              <Column
+                selectionMode="multiple"
+                headerStyle="width: 3rem"
+                class="!border-0"
+                v-if="multipleSelection"
+              ></Column>
+              
+              <!-- Columnas dinámicas SIN ACCIONES -->
+              <Column
+                class="!border-0"
+                v-for="col in headers"
+                :key="col.field"
+                :field="col.field"
+                :sortable="true"
+                :style="
+                  col.width ? { width: col.width, minWidth: col.width, maxWidth: col.width } : {}
+                "
+              >
+                <template #header>
+                  <div
+                    class="flex items-center justify-center gap-2 text-sm font-semibold text-neutral-600 dark:text-neutral-300 uppercase tracking-wide"
+                  >
+                    <slot :name="`header-${col.field}`">
+                      {{ col.header }}
+                    </slot>
+                  </div>
+                </template>
+
+                <template #body="{ data }">
+                  <div
+                    class="flex justify-center font-medium items-center text-sm text-neutral-500 dark:text-neutral-400"
+                  >
+                    <slot
+                      v-if="$slots[`custom-${col.field}`]"
+                      :name="`custom-${col.field}`"
+                      :data="data"
+                    >
+                      {{ data[col.field] }}
+                    </slot>
+
+                    <template v-else-if="isDateField(col.field) && data[col.field]">
+                      <span>
+                        {{ formatDate(data[col.field] as string, col.field) }}
+                      </span>
+                    </template>
+
+                    <template v-else>
+                      <span class="truncate max-w-[200px]" :title="String(data[col.field] || '')">
+                        {{ data[col.field] || '-' }}
+                      </span>
+                    </template>
+                  </div>
+                </template>
+              </Column>
+
+              <template #empty>
+                <slot name="empty">
+                  <div class="flex flex-col items-center justify-center p-4 text-center">
+                    <i class="pi pi-inbox text-5xl text-neutral-300 dark:text-neutral-600 mb-4"></i>
+                    <p class="text-neutral-500 dark:text-neutral-400">
+                      {{ emptyMessage }}
+                    </p>
+                  </div>
+                </slot>
+              </template>
+            </DataTable>
+
+            <!-- Vista móvil mejorada -->
+            <div v-else class="mobile-inventories">
+              <div v-if="loading" class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Cargando...</p>
+              </div>
+
+              <div v-else-if="data.length === 0" class="empty-container">
+                <slot name="empty">
+                  <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No hay inventarios</h3>
+                    <p class="text-gray-500 mb-4">Crea tu primer inventario para comenzar</p>
+                  </div>
+                </slot>
+              </div>
+
+              <div v-else class="mobile-list space-y-4 p-4">
+                <div
+                  v-for="inventory in data"
+                  :key="inventory.id"
+                  class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200"
+                  :class="{ 'bg-blue-50 border-blue-300 border-l-4': isSelected(inventory) }"
+                  @click="toggleSelection(inventory)"
+                  @dblclick="handleRowDoubleClick({ data: inventory })"
+                >
+                  <!-- Header con título y estado -->
+                  <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                      <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-lg font-semibold text-gray-900">{{ inventory.name }}</h3>
+                        <span 
+                          class="text-xs px-2 py-1 rounded-full"
+                          :class="getStatusClass(inventory)"
+                        >
+                          {{ getStatusText(inventory) }}
+                        </span>
+                      </div>
+                      
+                      <p class="text-sm text-gray-600 mb-2 line-clamp-2">{{ inventory.description || 'Sin descripción' }}</p>
+                      
+                      <!-- Información rápida -->
+                      <div class="grid grid-cols-2 gap-2 text-xs text-gray-500 mb-3">
+                        <div class="flex items-center">
+                          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
+                          Productos: {{ inventory.total_products || 0 }}
+                        </div>
+                        <div class="flex items-center">
+                          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
+                          Contados: {{ inventory.counted_products || 0 }}
+                        </div>
+                        <div class="flex items-center">
+                          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
+                          Unidades: {{ inventory.total_units || 0 }}
+                        </div>
+                        <div class="flex items-center">
+                          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
+                          Contadas: {{ inventory.counted_units || 0 }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Barra de progreso -->
+                  <div class="mt-3 mb-3">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                      <span>Progreso</span>
+                      <span class="font-medium">{{ Math.round(calculateProgress(inventory)) }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        class="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                        :style="{ width: `${calculateProgress(inventory)}%` }"
+                      ></div>
+                    </div>
+                  </div>
+
+                  <!-- Acciones rápidas en móvil -->
+                  <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                    <span class="text-xs text-gray-500">
+                      Creado: {{ formatDate(inventory.created_at as string, 'created_at') }}
+                    </span>
+                    <div class="flex space-x-2">
+                      <button
+                        @click.stop="$emit('row-double-click', inventory)"
+                        class="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                      >
+                        Abrir
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Indicador de selección -->
+                  <div v-if="isSelected(inventory)" class="mt-2 text-xs text-blue-600 font-medium flex items-center">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Seleccionado
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          v-if="showPaginator"
+          class="flex flex-col md:flex-row md:justify-between items-center mt-4 gap-2 md:gap-0"
+        >
+          <small class="text-sm text-center md:text-left">
+            <span class="text-base font-semibold">
+              {{ totalItems }}
+            </span>
+            {{ textTotalItems }}
+          </small>
+
+          <Paginator
+            v-show="totalItems > 0"
+            :rows="pageSize"
+            :rowsPerPageOptions="rowSizes"
+            :totalRecords="totalItems"
+            :template="paginatorTemplate"
+            :class="paginatorClasses"
+            @page="handlePageChange"
+          />
+        </div>
+      </template>
+    </Card>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { computed, ref, useAttrs, watch, watchEffect } from 'vue'
 
@@ -150,7 +402,7 @@ const menuModel = ref([
   },
 ])
 
-//Detectar campos de fecha automáticamente
+// Detectar campos de fecha automáticamente
 const detectedDateFields = computed(() => {
   if (!props.autoDetectDateFields || props.data.length === 0) {
     return props.dateFields
@@ -159,14 +411,14 @@ const detectedDateFields = computed(() => {
   const dateFieldConfigs: DateFormatConfig[] = [...props.dateFields]
   const existingFields = dateFieldConfigs.map((config) => config.field)
 
-  //Comprueba datos para inferir campos de fecha
+  // Comprueba datos para inferir campos de fecha
   const item = props.data[0]
 
   props.headers.forEach((header) => {
     const field = header.field
     const value = item[field]
 
-    //Si ya está configurado, omitir
+    // Si ya está configurado, omitir
     if (existingFields.includes(field)) {
       return
     }
@@ -193,12 +445,12 @@ const isIsoDateString = (str: string): boolean => {
   return /^\d{4}-\d{2}-\d{2}/.test(str) && !isNaN(Date.parse(str))
 }
 
-//Detectar si un campo es de fecha
+// Detectar si un campo es de fecha
 const isDateField = (field: string): boolean => {
   return detectedDateFields.value.some((config) => config.field === field)
 }
 
-//Obtener la configuración de formato para un campo
+// Obtener la configuración de formato para un campo
 const getDateConfig = (field: string): DateFormatConfig | undefined => {
   return detectedDateFields.value.find((config) => config.field === field)
 }
@@ -250,6 +502,61 @@ const rowClass = (data: Record<string, unknown>) => {
     return 'bg-gray-100 border-l-4 border-l-blue-500'
   }
   return ''
+}
+
+// Funciones para vista móvil
+const calculateProgress = (inventory: Record<string, unknown>): number => {
+  const totalUnits = Number(inventory.total_units) || 0
+  const countedUnits = Number(inventory.counted_units) || 0
+  
+  if (totalUnits === 0) return 0
+  
+  const progress = (countedUnits / totalUnits) * 100
+  return Math.min(100, Math.max(0, progress))
+}
+
+const getStatusClass = (inventory: Record<string, unknown>): string => {
+  const progress = calculateProgress(inventory)
+  if (progress === 0) return 'bg-gray-100 text-gray-800'
+  if (progress === 100) return 'bg-green-100 text-green-800'
+  return 'bg-blue-100 text-blue-800'
+}
+
+const getStatusText = (inventory: Record<string, unknown>): string => {
+  const progress = calculateProgress(inventory)
+  if (progress === 0) return 'Pendiente'
+  if (progress === 100) return 'Completado'
+  return 'En Progreso'
+}
+
+// Función para verificar si un item está seleccionado (para vista móvil)
+const isSelected = (item: Record<string, unknown>): boolean => {
+  if (!selectedRow.value) return false
+  
+  if (Array.isArray(selectedRow.value)) {
+    return selectedRow.value.some(selected => selected.id === item.id)
+  } else {
+    return selectedRow.value?.id === item.id
+  }
+}
+
+// Alternar selección en vista móvil
+const toggleSelection = (item: Record<string, unknown>) => {
+  if (!props.multipleSelection) {
+    selectedRow.value = item
+    return
+  }
+
+  let newSelection: Record<string, unknown>[] = []
+  const currentSelection = Array.isArray(selectedRow.value) ? selectedRow.value : []
+
+  if (isSelected(item)) {
+    newSelection = currentSelection.filter(selected => selected.id !== item.id)
+  } else {
+    newSelection = [...currentSelection, item]
+  }
+
+  selectedRow.value = newSelection
 }
 
 watchEffect(() => {
@@ -308,246 +615,7 @@ const tableContentClasses = computed(() => {
   }
   return baseClasses.join(' ')
 })
-
-// Función para verificar si un item está seleccionado (para vista móvil)
-const isSelected = (item: Record<string, unknown>): boolean => {
-  if (!selectedRow.value) return false
-  
-  if (Array.isArray(selectedRow.value)) {
-    return selectedRow.value.some(selected => selected.id === item.id)
-  } else {
-    return selectedRow.value?.id === item.id
-  }
-}
-
-// Alternar selección en vista móvil
-const toggleSelection = (item: Record<string, unknown>) => {
-  if (!props.multipleSelection) {
-    selectedRow.value = item
-    return
-  }
-
-  let newSelection: Record<string, unknown>[] = []
-  const currentSelection = Array.isArray(selectedRow.value) ? selectedRow.value : []
-
-  if (isSelected(item)) {
-    newSelection = currentSelection.filter(selected => selected.id !== item.id)
-  } else {
-    newSelection = [...currentSelection, item]
-  }
-
-  selectedRow.value = newSelection
-}
 </script>
-
-<template>
-  <div :class="containerClasses">
-    <Card
-      v-bind="forwardedAttrs"
-      :class="cardClass"
-      :pt="{ ...pt, body: { style: 'padding: 0.8rem !important;' } }"
-      :pt-options="ptOptions"
-    >
-      <template #content>
-        <div class="relative flex flex-col" :class="tableContentClasses">
-          <ContextMenu
-            v-if="contextMenu"
-            ref="contextMenuRef"
-            :model="menuModel"
-            @hide="selectedRow = null"
-          />
-
-          <div class="flex-1 min-h-0 overflow-hidden">
-            <!-- Vista de escritorio -->
-            <DataTable
-              v-if="!isMdScreen"
-              v-model:selection="selectedRow"
-              :value="data"
-              :size="tableSize"
-              v-model:contextMenuSelection="selectedRow"
-              @rowContextmenu="onRowContextMenu"
-              @rowDblclick="handleRowDoubleClick"
-              :selectionMode="multipleSelection ? 'multiple' : 'single'"
-              :removableSort="removableSort"
-              :resizableColumns="resizableColumns"
-              :reorderableColumns="reorderableColumns"
-              :scrollable="true"
-              :scrollHeight="'flex'"
-              :virtualScrollerOptions="virtualScrollerOptions"
-              :showGridlines="showGridlines"
-              :stripedRows="stripedRows"
-              tableStyle="min-width: 50rem"
-              :class="tableClasses"
-              :contextMenu="contextMenu"
-              @column-resize-end="emit('column-resize-end', $event)"
-              @column-reorder="emit('column-reorder', $event)"
-              :loading="loading"
-              :emptyMessage="emptyMessage"
-              :rowClass="rowClass"
-            >
-              <Column
-                selectionMode="multiple"
-                headerStyle="width: 3rem"
-                class="!border-0"
-                v-if="multipleSelection"
-              ></Column>
-              
-              <!-- Columnas dinámicas SIN ACCIONES -->
-              <Column
-                class="!border-0"
-                v-for="col in headers"
-                :key="col.field"
-                :field="col.field"
-                :sortable="true"
-                :style="
-                  col.width ? { width: col.width, minWidth: col.width, maxWidth: col.width } : {}
-                "
-              >
-                <template #header>
-                  <div
-                    class="flex items-center justify-center gap-2 text-sm font-semibold text-neutral-600 dark:text-neutral-300 uppercase tracking-wide"
-                  >
-                    <slot :name="`header-${col.field}`">
-                      {{ col.header }}
-                    </slot>
-                  </div>
-                </template>
-
-                <template #body="{ data }">
-                  <div
-                    class="flex justify-center font-medium items-center text-sm text-neutral-500 dark:text-neutral-400"
-                  >
-                    <slot
-                      v-if="$slots[`custom-${col.field}`]"
-                      :name="`custom-${col.field}`"
-                      :data="data"
-                    >
-                      {{ data[col.field] }}
-                    </slot>
-
-                    <template v-else-if="isDateField(col.field) && data[col.field]">
-                      <span>
-                        {{ formatDate(data[col.field] as string, col.field) }}
-                      </span>
-                    </template>
-
-                    <template v-else>
-                      <span class="truncate max-w-[200px]" :title="String(data[col.field] || '')">
-                        {{ data[col.field] || '-' }}
-                      </span>
-                    </template>
-                  </div>
-                </template>
-              </Column>
-
-              <template #empty>
-                <slot name="empty">
-                  <div class="flex flex-col items-center justify-center p-4 text-center">
-                    <i class="pi pi-inbox text-5xl text-neutral-300 dark:text-neutral-600 mb-4"></i>
-                    <p class="text-neutral-500 dark:text-neutral-400">
-                      {{ emptyMessage }}
-                    </p>
-                  </div>
-                </slot>
-              </template>
-            </DataTable>
-
-            <!-- Vista móvil -->
-            <div v-else class="mobile-inventories">
-              <div v-if="loading" class="loading-container">
-                <div class="loading-spinner"></div>
-                <p>Cargando...</p>
-              </div>
-
-              <div v-else-if="data.length === 0" class="empty-container">
-                <slot name="empty">
-                  <div class="text-center py-12">
-                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">No hay inventarios</h3>
-                    <p class="text-gray-500 mb-4">Crea tu primer inventario para comenzar</p>
-                  </div>
-                </slot>
-              </div>
-
-              <div v-else class="mobile-list space-y-4 p-4">
-                <div
-                  v-for="inventory in data"
-                  :key="inventory.id"
-                  class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow duration-200"
-                  :class="{ 'bg-gray-100 border-blue-300': isSelected(inventory) }"
-                  @click="toggleSelection(inventory)"
-                  @dblclick="handleRowDoubleClick({ data: inventory })"
-                >
-                  <!-- Header con título -->
-                  <div class="flex justify-between items-start mb-3">
-                    <div class="flex-1">
-                      <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-lg font-semibold text-gray-900">{{ inventory.name }}</h3>
-                      </div>
-                      
-                      <p class="text-sm text-gray-600 mb-2">{{ inventory.description }}</p>
-                      <div class="flex flex-wrap gap-3 text-xs text-gray-500">
-                        <span class="flex items-center">
-                          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                          Productos: {{ inventory.total_products }}
-                        </span>
-                        <span class="flex items-center">
-                          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                          </svg>
-                          Contados: {{ inventory.counted_products }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Barra de progreso -->
-                  <div class="mt-3 mb-3">
-                    <div class="flex justify-between text-xs text-gray-600 mb-1">
-                      <span>Progreso</span>
-                      <span class="font-medium">{{ Math.round(inventory.progress_percentage as number) }}%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        class="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-                        :style="{ width: `${inventory.progress_percentage}%` }"
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div
-          v-if="showPaginator"
-          class="flex flex-col md:flex-row md:justify-between items-center mt-4 gap-2 md:gap-0"
-        >
-          <small class="text-sm text-center md:text-left">
-            <span class="text-base font-semibold">
-              {{ totalItems }}
-            </span>
-            {{ textTotalItems }}
-          </small>
-
-          <Paginator
-            v-show="totalItems > 0"
-            :rows="pageSize"
-            :rowsPerPageOptions="rowSizes"
-            :totalRecords="totalItems"
-            :template="paginatorTemplate"
-            :class="paginatorClasses"
-            @page="handlePageChange"
-          />
-        </div>
-      </template>
-    </Card>
-  </div>
-</template>
 
 <style lang="scss" scoped>
 // Altura adaptativa simple
@@ -610,6 +678,13 @@ const toggleSelection = (item: Record<string, unknown>) => {
 }
 
 .mobile-item.selected {
-  @apply bg-gray-100 border-blue-300;
+  @apply bg-blue-50 border-blue-300 border-l-4;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>
