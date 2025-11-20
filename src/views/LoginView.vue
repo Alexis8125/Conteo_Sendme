@@ -4,7 +4,6 @@
       <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
         <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-center">
           <h1 class="text-2xl font-bold text-white mb-2">Conteo de Inventario</h1>
-          <!-- <p class="text-blue-100 text-sm">Control y gestión de inventarios</p> -->
         </div>
         
         <div class="p-8">
@@ -105,7 +104,6 @@ async function handleLogin() {
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
       
-      // Pequeño delay para que se vea la notificación
       setTimeout(() => {
         router.push('/inventarios')
       }, 1000)

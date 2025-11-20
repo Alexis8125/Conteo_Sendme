@@ -1,7 +1,6 @@
-<!-- src/views/CountingView.vue -->
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Header (se mantiene igual) -->
+    <!-- Header  -->
     <header class="bg-white shadow-sm border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
@@ -416,7 +415,7 @@
       </div>
     </main>
 
-    <!-- Botón flotante para escáner de cámara - SOLO EN MÓVILES -->
+    <!-- Botón flotante para escáner de cámara -->
     <button
       v-if="isMobileDevice && !showQRScanner"
       @click="openQRScanner"

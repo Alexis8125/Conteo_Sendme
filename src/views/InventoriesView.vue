@@ -112,7 +112,7 @@
                   </svg>
                 </button>
                 
-                <!-- Dropdown para acciones secundarias en móvil - POSICIÓN CORREGIDA -->
+                <!-- Dropdown para acciones secundarias en móvil -->
                 <div class="relative sm:hidden">
                   <button
                     @click="toggleMobileActions"
@@ -810,7 +810,6 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* Animación para el modal de acciones móviles */
 .mobile-actions-enter-active,
 .mobile-actions-leave-active {
   transition: all 0.3s ease;

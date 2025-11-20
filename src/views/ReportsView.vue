@@ -1,4 +1,3 @@
-<!-- src/views/ReportsView.vue COMPLETO CORREGIDO -->
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Header -->
@@ -16,8 +15,9 @@
               <span>Volver a Inventarios</span>
             </button>
             <div>
-              <h1 class="text-xl font-bold text-gray-900">Reportes de Inventario</h1>
-              <p class="text-sm text-gray-500">{{ inventory?.name }}</p>
+              <h1 class="text-xl font-bold text-gray-900">{{ inventory?.name }}</h1>
+              <h1 class="text-sm  text-gray-500">Reportes de Inventario</h1>
+              
             </div>
           </div>
           <div class="flex items-center space-x-4">
@@ -109,7 +109,7 @@
         </div>
       </div>
 
-      <!-- Resumen General MEJORADO -->
+      <!-- Resumen General -->
       <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
           <div class="text-xl font-bold text-blue-600">{{ summary.totalProducts }}</div>
@@ -198,7 +198,7 @@
         </div>
       </div>
 
-      <!-- Gráficos y Métricas CORREGIDOS -->
+      <!-- Gráficos y Métricas -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <!-- Distribución de Estados -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -217,7 +217,7 @@
           </div>
         </div>
 
-        <!-- Progreso General CORREGIDO -->
+        <!-- Progreso General -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Progreso del Inventario</h3>
           <div class="space-y-4">
@@ -331,7 +331,7 @@
             </span>
           </template>
 
-          <!-- Slot para progreso del producto CORREGIDO -->
+          <!-- Slot para progreso del producto -->
           <template #custom-progress="{ data }">
             <div class="flex flex-col items-center">
               <div class="w-full bg-gray-200 rounded-full h-2 mb-1">
@@ -517,7 +517,7 @@ const baseTableHeaders = ref([
   { field: 'actions', header: 'Acciones', width: '80px' }
 ])
 
-// Computed para resumen MEJORADO
+// Computed para resumen
 const summary = computed(() => {
   const totalProducts = products.value.length
   const countedProducts = products.value.filter(p => p.counted_stock > 0).length
@@ -581,7 +581,7 @@ const statusDistribution = computed(() => {
   ]
 })
 
-// Computed para productos filtrados MEJORADO
+// Computed para productos filtrados
 const filteredProducts = computed(() => {
   let filtered = products.value
 
